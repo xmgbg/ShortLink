@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
@@ -17,6 +17,10 @@
 
 package com.nageoffer.shortlink.admin.dto.req;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 /**
@@ -28,25 +32,34 @@ public class UserRegisterReqDTO {
     /**
      * 用户名
      */
+    @NotBlank
+    @Size(min = 3, max = 32)
     private String username;
 
     /**
      * 密码
      */
+    @NotBlank
+    @Size(min = 8, max = 64)
     private String password;
 
     /**
      * 真实姓名
      */
+    @NotBlank
+    @Size(max = 64)
     private String realName;
 
     /**
      * 手机号
      */
+    @Pattern(regexp = "^$|^1\\d{10}$")
     private String phone;
 
     /**
      * 邮箱
      */
+    @Email
+    @Size(max = 128)
     private String mail;
 }
