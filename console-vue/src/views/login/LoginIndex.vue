@@ -1,6 +1,6 @@
 <template>
   <div class="login-page">
-    <h1 class="title">SaaS 短 链 接 平 台(马丁)</h1>
+    <h1 class="title">抖音短链接系统(小马鸽)</h1>
     <div class="login-box">
       <!-- 登录 -->
       <div class="logon" :class="{ hidden: !isLogin }">
@@ -138,7 +138,7 @@ const loginFormRef2 = ref()
 const router = useRouter()
 const loginForm = reactive({
   username: 'admin',
-  password: 'admin123456',
+  password: '',
 })
 const addForm = reactive({
   username: '',
@@ -198,12 +198,10 @@ const addUser = (formEl) => {
         } else {
           const res3 = await API.user.login({ username: addForm.username, password: addForm.password })
           const token = res3?.data?.data?.token
-          // 将username和token保存到cookies中和localStorage中
+          // 保存登录凭证
           if (token) {
             setToken(token)
             setUsername(addForm.username)
-            localStorage.setItem('token', token)
-            localStorage.setItem('username', addForm.username)
           }
           ElMessage.success('注册登录成功！')
           router.push('/home')
@@ -235,12 +233,10 @@ const verificationLogin = (formEl) => {
       const res1 = await API.user.login(loginForm)
       if (res1.data.code === '0') {
         const token = res1?.data?.data?.token
-        // 将username和token保存到cookies中和localStorage中
+        // 保存登录凭证
         if (token) {
           setToken(token)
           setUsername(loginForm.username)
-          localStorage.setItem('token', token)
-          localStorage.setItem('username', loginForm.username)
         }
         ElMessage.success('登录成功！')
         router.push('/home')
@@ -274,12 +270,10 @@ const login = (formEl) => {
       const res1 = await API.user.login(loginForm)
       if (res1.data.code === '0') {
         const token = res1?.data?.data?.token
-        // 将username和token保存到cookies中和localStorage中
+        // 保存登录凭证
         if (token) {
           setToken(token)
           setUsername(loginForm.username)
-          localStorage.setItem('token', token)
-          localStorage.setItem('username', loginForm.username)
         }
         ElMessage.success('登录成功！')
         router.push('/home')

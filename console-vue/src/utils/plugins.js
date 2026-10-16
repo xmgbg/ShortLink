@@ -49,12 +49,9 @@ function randomString(length) {
   return result
 }
 function isString(text) {
-  try {
-    // eslint-disable-next-line no-eval
-    return typeof eval(text) === 'string'
-  } catch (err) {
-    return false
-  }
+  if (typeof text !== 'string' || text.length < 2) return false
+  const quote = text[0]
+  return (quote === '"' || quote === "'") && text[text.length - 1] === quote
 }
 
 export const hidePhone = (phone) => {

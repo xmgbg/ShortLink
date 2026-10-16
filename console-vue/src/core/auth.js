@@ -10,11 +10,11 @@ export function getUsername() {
 }
 
 export function setToken(token) {
-  return Cookies.set(TokenKey, token)
+  return Cookies.set(TokenKey, token, { sameSite: 'strict', secure: window.location.protocol === 'https:' })
 }
 
 export function setUsername(username) {
-  return Cookies.set('username', username)
+  return Cookies.set('username', username, { sameSite: 'strict', secure: window.location.protocol === 'https:' })
 }
 
 export function removeKey() {
