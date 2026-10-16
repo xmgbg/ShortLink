@@ -121,20 +121,18 @@ cd shortlink
 CREATE DATABASE IF NOT EXISTS `link` DEFAULT CHARACTER SET utf8mb4;
 ```
 
-数据库连接配置位于各模块的 `shardingsphere-config-dev.yaml` 中，默认配置：
+敏感配置不写入源码。请参考根目录 `.env.example`，在 IDE 启动配置、系统环境变量或部署平台中设置：
 
-```yaml
-host: 127.0.0.1
-port: 3306
-database: link
-username: root
-password: 233666
+```dotenv
+SHORTLINK_DB_URL=jdbc:mysql://127.0.0.1:3306/link?useUnicode=true&characterEncoding=UTF-8&rewriteBatchedStatements=true&serverTimezone=Asia/Shanghai
+SHORTLINK_DB_USERNAME=root
+SHORTLINK_DB_PASSWORD=replace_me
+SHORTLINK_AES_KEY=change_me_16byte
+AMAP_KEY=replace_me
+DOMAIN_WHITE_LIST_ENABLED=true
 ```
 
-如需修改，请同步更新以下文件：
-- `admin/src/main/resources/shardingsphere-config-dev.yaml`
-- `project/src/main/resources/shardingsphere-config-dev.yaml`
-- `aggregation/src/main/resources/shardingsphere-config-dev.yaml`
+`.env` 文件仅作为本地配置载体，Spring Boot 不会自动读取它；请通过 IDE 或启动脚本将变量注入进程环境。不要提交真实密码和密钥。
 
 #### 启动 Redis
 
