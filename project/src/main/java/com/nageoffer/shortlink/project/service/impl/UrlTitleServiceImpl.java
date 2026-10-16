@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
@@ -18,13 +18,10 @@
 package com.nageoffer.shortlink.project.service.impl;
 
 import com.nageoffer.shortlink.project.service.UrlTitleService;
+import com.nageoffer.shortlink.project.toolkit.SafeUrlFetcher;
 import lombok.SneakyThrows;
-import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.springframework.stereotype.Service;
-
-import java.net.HttpURLConnection;
-import java.net.URL;
 
 /**
  * URL 标题接口实现层
@@ -35,15 +32,7 @@ public class UrlTitleServiceImpl implements UrlTitleService {
     @SneakyThrows
     @Override
     public String getTitleByUrl(String url) {
-        URL targetUrl = new URL(url);
-        HttpURLConnection connection = (HttpURLConnection) targetUrl.openConnection();
-        connection.setRequestMethod("GET");
-        connection.connect();
-        int responseCode = connection.getResponseCode();
-        if (responseCode == HttpURLConnection.HTTP_OK) {
-            Document document = Jsoup.connect(url).get();
-            return document.title();
-        }
-        return "Error while fetching title.";
+        Document document = SafeUrlFetcher.fetch(url);
+        return document.title();
     }
 }

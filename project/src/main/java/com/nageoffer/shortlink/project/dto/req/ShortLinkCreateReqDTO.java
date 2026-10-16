@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
@@ -18,6 +18,11 @@
 package com.nageoffer.shortlink.project.dto.req;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -37,26 +42,38 @@ public class ShortLinkCreateReqDTO {
     /**
      * 域名
      */
+    @NotBlank
+    @Size(max = 255)
     private String domain;
 
     /**
      * 原始链接
      */
+    @NotBlank
+    @Size(max = 2048)
     private String originUrl;
 
     /**
      * 分组标识
      */
+    @NotBlank
+    @Size(max = 64)
     private String gid;
 
     /**
      * 创建类型 0：接口创建 1：控制台创建
      */
+    @NotNull
+    @Min(0)
+    @Max(1)
     private Integer createdType;
 
     /**
      * 有效期类型 0：永久有效 1：自定义
      */
+    @NotNull
+    @Min(0)
+    @Max(1)
     private Integer validDateType;
 
     /**
@@ -68,5 +85,6 @@ public class ShortLinkCreateReqDTO {
     /**
      * 描述
      */
+    @Size(max = 1024)
     private String describe;
 }
