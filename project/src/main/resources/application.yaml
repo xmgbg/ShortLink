@@ -23,13 +23,13 @@ spring:
 
 short-link:
   domain:
-    default: nurl.ink:8001
+    default: xmgbg:8001
   stats:
     locale:
-      amap-key: 824c511f0997586ea016f979fdb23087
+      amap-key: ${AMAP_KEY:}
   goto-domain:
     white-list:
-      enable: false
+      enable: ${DOMAIN_WHITE_LIST_ENABLED:true}
       names: '拿个offer,知乎,掘金,博客园'
       details:
         - nageoffer.com
@@ -38,6 +38,4 @@ short-link:
         - cnblogs.com
 
 mybatis-plus:
-  configuration:
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
   mapper-locations: classpath:mapper/*.xml
