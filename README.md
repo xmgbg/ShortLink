@@ -1,305 +1,109 @@
-# ShortLink - SaaS 短链接系统
+<div align="center">
+  <img src="docs/assets/shortlink-logo-tech.png" width="170" alt="抖音短链接系统 Logo" />
+  <h1>抖音短链接系统</h1>
+  <p>让分享更轻便，让访问可追踪。</p>
+  <p>短链生成 · 分组管理 · 访问分析 · 全栈管理控制台</p>
+  <p>
+    <img src="https://img.shields.io/badge/Java-17-2563EB?style=flat-square" alt="Java 17" />
+    <img src="https://img.shields.io/badge/Spring_Boot-3-16A34A?style=flat-square" alt="Spring Boot 3" />
+    <img src="https://img.shields.io/badge/Vue-3-10B981?style=flat-square" alt="Vue 3" />
+    <img src="https://img.shields.io/badge/Redis-Stream-DC2626?style=flat-square" alt="Redis Stream" />
+    <img src="https://img.shields.io/badge/ShardingSphere-5-7C3AED?style=flat-square" alt="ShardingSphere 5" />
+  </p>
+  <p><a href="#系统架构">系统架构</a> · <a href="#核心技术栈">技术栈</a> · <a href="#快速开始">快速开始</a> · <a href="启动.md">完整启动指南</a></p>
+</div>
 
 ## 项目介绍
 
-ShortLink 是一个企业级 SaaS 短链接管理系统，基于 Spring Cloud 微服务架构构建，具备高并发、海量存储等场景的处理能力。
+这是一个面向短视频分享与内容推广场景的全栈短链接管理项目，提供长链接转换、批量创建、分组管理、回收站与访问分析功能。管理端负责链接运营，跳转端通过缓存和异步统计处理访问请求，帮助使用者观察内容的传播情况。
 
-### 核心功能
+项目名称用于描述业务场景，非抖音官方产品；当前不依赖抖音开放平台，也不读取抖音账号、播放量或订单数据。
 
-- **短链接生成与管理**：支持单个/批量创建短链接，自定义短链接后缀，设置有效期
-- **分组管理**：支持短链接分组，方便分类管理
-- **回收站**：删除的短链接进入回收站，支持恢复和彻底删除
-- **访问统计**：提供丰富的访问数据统计，包括 PV/UV/IP、地域分布、设备类型、浏览器、操作系统、访问网络等维度
-- **用户系统**：用户注册、登录、个人信息管理，支持手机号脱敏展示
-- **风控限流**：基于 Redis + Lua 脚本实现用户维度的流量风控
-- **演示模式**：支持演示环境配置，限制危险操作
+## 核心能力
 
-### 技术栈
+| 能力 | 当前实现 |
+| --- | --- |
+| 短链创建 | 单条与批量创建、有效期设置、目标地址校验 |
+| 链接管理 | 分组、分页查询、编辑、回收站恢复与删除 |
+| 快速跳转 | Hash + Base62 短码、Redis 缓存、空值缓存、布隆过滤器及互斥锁 |
+| 访问分析 | PV、UV、独立 IP，以及地域、设备、浏览器等维度的分析看板 |
+| 异步统计 | Redis Stream 投递访问事件，消费者处理统计落库与消息去重 |
+| 接口治理 | Gateway 鉴权、Nacos 服务发现、Sentinel 限流、Redis Lua 用户频控 |
 
-#### 后端
+## 系统架构
 
-| 技术 | 版本 | 说明 |
-|------|------|------|
-| Java | 17 | 开发语言 |
-| Spring Boot | 3.0.7 | 应用框架 |
-| Spring Cloud | 2022.0.3 | 微服务框架 |
-| Spring Cloud Alibaba | 2022.0.0.0-RC2 | 微服务生态（Nacos 服务发现） |
-| Spring Cloud Gateway | - | API 网关 |
-| MyBatis-Plus | 3.5.3.1 | ORM 框架 |
-| ShardingSphere | 5.3.2 | 分库分表 + 数据加密 |
-| MySQL | 8.0+ | 关系型数据库 |
-| Redis | 6.0+ | 缓存 / 分布式锁 |
-| Redisson | 3.27.2 | Redis 客户端 |
-| Nacos | 2.x | 注册中心 & 配置中心 |
-| Hutool | 5.8.27 | 工具库 |
-| Fastjson2 | 2.0.36 | JSON 序列化 |
-| EasyExcel | 3.1.3 | Excel 导入导出 |
-| Sentinel | - | 流量防护 |
+![抖音短链接系统架构](docs/assets/shortlink-architecture.png)
 
-#### 前端
+## 核心技术栈
 
-| 技术 | 版本 | 说明 |
-|------|------|------|
-| Vue | 3.3.4 | 前端框架 |
-| Vite | 4.4.9 | 构建工具 |
-| Element Plus | 2.3.14 | UI 组件库 |
-| ECharts | 4.8 | 图表可视化 |
-| Axios | 1.5.1 | HTTP 客户端 |
-| Vue Router | 4.2.4 | 路由管理 |
-| Vuex | 4.0.2 | 状态管理 |
+| 层次 | 技术与用途 |
+| --- | --- |
+| 后端服务 | Java 17 · Spring Boot 3 · Spring Cloud：服务组织与业务接口 |
+| 数据存储 | MySQL · MyBatis-Plus · ShardingSphere：持久化、分片与短链路由 |
+| 缓存与事件 | Redis · Redisson · Redis Stream：缓存、分布式锁与异步统计 |
+| 服务治理 | Gateway · Nacos · Sentinel：入口鉴权、服务发现与流量控制 |
+| 前端控制台 | Vue 3 · Vite 8 · Element Plus · ECharts 6：管理交互与可视化 |
 
-### 项目结构
+具体依赖版本以根目录 `pom.xml` 和 `console-vue/package-lock.json` 为准。
 
-```
-shortlink/
-├── admin/                   # 管理端服务（用户、分组、短链接管理）
-├── project/                 # 核心短链接服务（生成、跳转、统计）
-├── aggregation/             # 聚合服务（合并 admin + project 功能，单体部署方案）
-├── gateway/                 # API 网关（路由分发、Token 鉴权）
-├── console-vue/             # 前端管理控制台
-└── pom.xml                  # 根 POM（依赖版本管理）
-```
+## 关键实现
 
-### 架构说明
+- **短链生成与跳转**：生成短码时结合布隆过滤器和数据库约束处理重复；访问时优先读取缓存，并结合空值缓存和互斥锁双重检查缓解穿透与击穿。
+- **分片与路由**：按分组标识组织短链分表，另设完整短链路由表，兼顾管理端分页查询与跳转定位。
+- **异步访问分析**：将统计落库移出跳转主链路，使用 Redis Stream 和消费状态标识处理异步访问事件。
+- **全栈协作**：管理控制台与后端接口串联创建、分享、查询和分析流程；支持聚合运行与服务拆分两种方式。
 
-项目支持两种部署模式：
+## 模块导航
 
-#### 微服务模式（gateway profile: dev）
-
-```
-浏览器 → Gateway(8000) → Admin(8002) / Project(8001)
-```
-
-Gateway 作为统一入口，将请求路由到对应的微服务，同时负责 Token 鉴权。
-
-#### 聚合服务模式（gateway profile: aggregation）
-
-```
-浏览器 → Gateway(8000) → Aggregation(8003)
-```
-
-Aggregation 服务整合了 Admin 和 Project 的全部功能，适合小规模部署场景。
-
-### 数据库设计
-
-- 采用 ShardingSphere 实现分表策略
-- `t_user` 表：按 `username` 哈希取模分 16 张表（t_user_0 ~ t_user_15）
-- `t_group` 表：按 `username` 哈希取模分 16 张表（t_group_0 ~ t_group_15）
-- 用户敏感字段（手机号、邮箱）使用 AES 加密存储
-
----
-
-## 环境要求
-
-| 依赖 | 版本要求 | 说明 |
-|------|----------|------|
-| JDK | 17+ | Java 开发环境 |
-| Maven | 3.6+ | 项目构建 |
-| MySQL | 8.0+ | 数据库 |
-| Redis | 6.0+ | 缓存 / 分布式锁 |
-| Nacos | 2.x | 服务注册与发现 |
-| Node.js | 16+ | 前端运行环境 |
-
----
+| 模块 | 职责 | 默认端口 |
+| --- | --- | --- |
+| `console-vue` | 链接管理与访问分析界面 | 本文显式指定 8990 |
+| `gateway` | 管理 API 路由与身份校验 | 8000 |
+| `admin` | 用户、分组与管理端业务入口 | 8002 |
+| `project` | 短链创建、跳转与统计处理 | 8001 |
+| `aggregation` | 合并 Admin 与 Project，便于本地运行 | 8003 |
 
 ## 快速开始
 
-### 1. 克隆项目
+本地首次体验建议采用聚合模式。需要 JDK 17、Maven、MySQL、Redis、Nacos，以及满足 Vite 要求的 Node.js（`20.19+` 的 20.x 或 `22.12+`；本机验证使用 Node.js 24）。
+
+### 1. 获取代码并准备环境
 
 ```bash
-git clone <your-repo-url>
-cd shortlink
+git clone https://github.com/xmgbg/ShortLink.git
+cd ShortLink
 ```
 
-### 2. 环境准备
+启动 MySQL、Redis、Nacos；首次运行时创建 `link` 数据库并导入 [建表脚本](resources/database/link.sql)。已有数据时不要重复执行初始化。
 
-#### 启动 MySQL
+参考 [.env.example](.env.example)，为后端进程设置 `SHORTLINK_DB_URL`、`SHORTLINK_DB_USERNAME`、`SHORTLINK_DB_PASSWORD` 和 `SHORTLINK_AES_KEY`。AES Key 使用自己的 16 字节值，同一环境保持一致。Spring Boot 不会自动加载根目录 `.env` 文件。
 
-确保 MySQL 服务已启动，创建数据库：
+### 2. 构建并启动后端
 
-```sql
-CREATE DATABASE IF NOT EXISTS `link` DEFAULT CHARACTER SET utf8mb4;
-```
-
-敏感配置不写入源码。请参考根目录 `.env.example`，在 IDE 启动配置、系统环境变量或部署平台中设置：
-
-```dotenv
-SHORTLINK_DB_URL=jdbc:mysql://127.0.0.1:3306/link?useUnicode=true&characterEncoding=UTF-8&rewriteBatchedStatements=true&serverTimezone=Asia/Shanghai
-SHORTLINK_DB_USERNAME=root
-SHORTLINK_DB_PASSWORD=replace_me
-SHORTLINK_AES_KEY=change_me_16byte
-AMAP_KEY=replace_me
-DOMAIN_WHITE_LIST_ENABLED=true
-```
-
-`.env` 文件仅作为本地配置载体，Spring Boot 不会自动读取它；请通过 IDE 或启动脚本将变量注入进程环境。不要提交真实密码和密钥。
-
-#### 启动 Redis
-
-确保 Redis 服务已启动，默认连接 `127.0.0.1:6379`。
-
-如需修改，请在各模块的 `application.yaml` 中更新：
-
-```yaml
-spring:
-  data:
-    redis:
-      host: 127.0.0.1
-      port: 6379
-      # password: your_password
-```
-
-#### 启动 Nacos
-
-确保 Nacos 服务已启动，默认连接 `127.0.0.1:8848`。
-
-如需修改，请在各模块的 `application.yaml` 中更新：
-
-```yaml
-spring:
-  cloud:
-    nacos:
-      discovery:
-        server-addr: 127.0.0.1:8848
-```
-
-### 3. 初始化数据库表
-
-执行项目中的 SQL 建表脚本（如项目提供了 init.sql），创建分表后的实际表结构（t_user_0 ~ t_user_15, t_group_0 ~ t_group_15 等）。
-
-### 4. 启动后端服务
-
-#### 方式一：微服务模式（推荐生产环境）
-
-在项目根目录执行构建：
+在项目根目录执行：
 
 ```bash
-mvn clean package -DskipTests
+mvn -DskipTests package
 ```
 
-按顺序启动各服务：
+分别在两个终端启动服务。聚合服务所在终端需要先配置上述环境变量：
 
 ```bash
-# 1. 启动 Admin 服务（端口 8002）
-java -jar admin/target/shortlink-admin-1.0-SNAPSHOT.jar
-
-# 2. 启动 Project 服务（端口 8001）
-java -jar project/target/shortlink-project-1.0-SNAPSHOT.jar
-
-# 3. 启动 Gateway 网关，使用 dev profile（端口 8000）
-java -jar gateway/target/shortlink-gateway-1.0-SNAPSHOT.jar --spring.profiles.active=dev
+java -jar aggregation/target/shortlink-aggregation.jar --short-link.domain.default=127.0.0.1:8003
 ```
-
-或者使用 Maven 插件直接运行：
 
 ```bash
-# 启动 Admin
-mvn -pl admin spring-boot:run
-
-# 启动 Project
-mvn -pl project spring-boot:run
-
-# 启动 Gateway（dev 模式）
-mvn -pl gateway spring-boot:run -Dspring-boot.run.profiles=dev
+java -jar gateway/target/shortlink-gateway.jar --spring.profiles.active=aggregation
 ```
 
-#### 方式二：聚合服务模式（推荐小规模部署）
-
-```bash
-mvn clean package -DskipTests
-
-# 1. 启动 Aggregation 服务（端口 8003）
-java -jar aggregation/target/shortlink-aggregation-1.0-SNAPSHOT.jar
-
-# 2. 启动 Gateway 网关，使用 aggregation profile（端口 8000）
-java -jar gateway/target/shortlink-gateway-1.0-SNAPSHOT.jar --spring.profiles.active=aggregation
-```
-
-### 5. 启动前端
+### 3. 启动管理控制台
 
 ```bash
 cd console-vue
-
-# 安装依赖
-npm install
-
-# 启动开发服务器
-npm run dev
+npm ci
+npm run dev -- --host 127.0.0.1 --port 8990
 ```
 
-前端开发服务器默认运行在 `http://localhost:8990`，API 请求代理到 Gateway `http://localhost:8000`。
+访问 **http://127.0.0.1:8990**，注册用户后创建分组，再创建短链验证跳转和访问统计。默认目标域名白名单已开启，可先用 `https://www.zhihu.com` 测试。
 
-### 6. 访问系统
-
-- **前端控制台**：`http://localhost:8990`
-- **Gateway 网关**：`http://localhost:8000`
-- **Admin 服务**：`http://localhost:8002`
-- **Project 服务**：`http://localhost:8001`
-- **Aggregation 服务**：`http://localhost:8003`
-
----
-
-## 配置说明
-
-### 数据库环境切换
-
-通过 `database.env` 变量切换数据库配置环境（默认 dev）：
-
-```bash
-java -jar admin/target/shortlink-admin-1.0-SNAPSHOT.jar --database.env=prod
-```
-
-对应的配置文件：
-- `shardingsphere-config-dev.yaml` — 开发环境
-- `shardingsphere-config-prod.yaml` — 生产环境
-
-### 短链接域名配置
-
-在 `project` 或 `aggregation` 服务的 `application.yaml` 中：
-
-```yaml
-short-link:
-  domain:
-    default: nurl.ink:8001  # 短链接默认域名
-```
-
-### 流量风控配置
-
-在 `admin` 或 `aggregation` 服务的 `application.yaml` 中：
-
-```yaml
-short-link:
-  flow-limit:
-    enable: true          # 是否启用限流
-    time-window: 1        # 时间窗口（秒）
-    max-access-count: 20  # 窗口内最大访问次数
-```
-
-### 演示模式
-
-在 `aggregation` 服务的 `application.yaml` 中：
-
-```yaml
-short-link:
-  demo-mode:
-    enable: false  # 是否启用演示模式
-    blacklist:     # 演示模式下禁用的 API 路径
-      - /api/short-link/admin/v1/group
-      - /api/short-link/admin/v1/recycle-bin/remove
-      # ...
-```
-
----
-
-## 主要端口一览
-
-| 服务 | 端口 | 说明 |
-|------|------|------|
-| gateway | 8000 | API 网关统一入口 |
-| project | 8001 | 核心短链接服务 |
-| admin | 8002 | 管理端服务 |
-| aggregation | 8003 | 聚合服务（可选） |
-| console-vue | 8990 | 前端开发服务器 |
-| MySQL | 3306 | 数据库 |
-| Redis | 6379 | 缓存 |
-| Nacos | 8848 | 注册中心 |
+完整的 Windows 环境准备、环境变量设置、微服务模式、端口检查和停止步骤见 [启动指南](启动.md)。地域分析需要配置 `AMAP_KEY`；未配置时相关维度可能不完整。
