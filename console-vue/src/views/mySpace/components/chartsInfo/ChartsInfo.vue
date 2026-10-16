@@ -196,8 +196,8 @@
 import { ref, watch, reactive } from 'vue'
 import TitleContent from './TitleContent.vue'
 import * as echarts from 'echarts'
-import 'echarts/map/js/china.js'
-import 'echarts/map/js/world.js'
+import '@/assets/maps/china.js'
+import worldMap from '@/assets/maps/world.json'
 import BarChart from './BarChart.vue'
 import KeyValue from './KeyValue.vue'
 import ProgressLine from './ProgressLine.vue'
@@ -221,6 +221,8 @@ import defaultImg from '@/assets/png/短链默认图标.png'
 import opera from '@/assets/png/opera.png'
 import IE from '@/assets/png/IE.png'
 import { getTodayFormatDate, getLastWeekFormatDate } from '@/utils/plugins.js'
+
+echarts.registerMap('world', worldMap)
 
 // 选择时间
 const shortcuts = [
