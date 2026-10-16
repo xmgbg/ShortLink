@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
@@ -54,7 +54,10 @@ public class TokenValidateGatewayFilterFactory extends AbstractGatewayFilterFact
     @Override
     public GatewayFilter apply(Config config) {
         return (exchange, chain) -> {
-            ServerHttpRequest request = exchange.getRequest();
+            ServerHttpRequest request = exchange.getRequest().mutate().headers(httpHeaders -> {
+                httpHeaders.remove("userId");
+                httpHeaders.remove("realName");
+            }).build();
             String requestPath = request.getPath().toString();
             String requestMethod = request.getMethod().name();
             if (!isPathInWhiteList(requestPath, requestMethod, config.getWhitePathList())) {
@@ -63,7 +66,7 @@ public class TokenValidateGatewayFilterFactory extends AbstractGatewayFilterFact
                 Object userInfo;
                 if (StringUtils.hasText(username) && StringUtils.hasText(token) && (userInfo = stringRedisTemplate.opsForHash().get("short-link:login:" + username, token)) != null) {
                     JSONObject userInfoJsonObject = JSON.parseObject(userInfo.toString());
-                    ServerHttpRequest.Builder builder = exchange.getRequest().mutate().headers(httpHeaders -> {
+                    ServerHttpRequest.Builder builder = request.mutate().headers(httpHeaders -> {
                         httpHeaders.set("userId", userInfoJsonObject.getString("id"));
                         httpHeaders.set("realName", URLEncoder.encode(userInfoJsonObject.getString("realName"), StandardCharsets.UTF_8));
                     });
@@ -80,11 +83,11 @@ public class TokenValidateGatewayFilterFactory extends AbstractGatewayFilterFact
                     return bufferFactory.wrap(JSON.toJSONString(resultMessage).getBytes());
                 }));
             }
-            return chain.filter(exchange);
+            return chain.filter(exchange.mutate().request(request).build());
         };
     }
 
     private boolean isPathInWhiteList(String requestPath, String requestMethod, List<String> whitePathList) {
-        return (!CollectionUtils.isEmpty(whitePathList) && whitePathList.stream().anyMatch(requestPath::startsWith)) || (Objects.equals(requestPath, "/api/short-link/admin/v1/user") && Objects.equals(requestMethod, "POST"));
+        return (!CollectionUtils.isEmpty(whitePathList) && whitePathList.contains(requestPath)) || (Objects.equals(requestPath, "/api/short-link/admin/v1/user") && Objects.equals(requestMethod, "POST"));
     }
 }
