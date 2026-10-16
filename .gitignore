@@ -1,11 +1,15 @@
+### Build output ###
 target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
 
-### IntelliJ IDEA ###
-.idea
-!/.idea/icon.png
+### IDE and local assistant state ###
+.idea/
+.vscode/
+.claude/
+.trae/
+work/
 *.iws
 *.iml
 *.ipr
@@ -29,8 +33,46 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
-### VS Code ###
-.vscode/
-
 ### Mac OS ###
 .DS_Store
+
+### Environment & Sensitive Config ###
+**/*-prod.yaml
+**/*-prod.yml
+.env
+.env.*
+!.env.example
+
+### Runtime files ###
+logs/
+*.log
+*.lck
+*.idx
+derby.log
+
+### Frontend output and caches ###
+node_modules/
+dist/
+dist-ssr/
+coverage/
+*.tsbuildinfo
+.eslintcache
+.stylelintcache
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+### OS temporary files ###
+Thumbs.db
+Desktop.ini
+*.tmp
+*.swp
+*.pid
+*.hprof
+*~
+
+### Personal notes ###
+/短链接系统核心功能源码整理.docx
+/shortlink-面试问答详解.md
+/resources/database/link-data.sql
