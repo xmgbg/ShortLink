@@ -11,7 +11,7 @@
     <img src="https://img.shields.io/badge/Redis-Stream-DC2626?style=flat-square" alt="Redis Stream" />
     <img src="https://img.shields.io/badge/ShardingSphere-5-7C3AED?style=flat-square" alt="ShardingSphere 5" />
   </p>
-  <p><a href="#系统架构">系统架构</a> · <a href="#核心技术栈">技术栈</a> · <a href="#快速开始">快速开始</a> · <a href="启动.md">完整启动指南</a></p>
+  <p><a href="#系统架构">系统架构</a> · <a href="#核心技术栈">技术栈</a> · <a href="#快速开始">快速开始</a></p>
 </div>
 
 ## 项目介绍
@@ -120,4 +120,4 @@ npm run dev -- --host 127.0.0.1 --port 8990
 
 访问 **http://127.0.0.1:8990**，注册用户后创建分组，再创建短链验证跳转和访问统计。默认目标域名白名单已开启，可先用 `https://www.zhihu.com` 测试。
 
-完整的 Windows 环境准备、环境变量设置、微服务模式、端口检查和停止步骤见 [启动指南](启动.md)。地域分析需要配置 `AMAP_KEY`；未配置时相关维度可能不完整。
+地域分析需要配置 `AMAP_KEY`；未配置时相关维度可能不完整。
