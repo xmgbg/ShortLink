@@ -1,6 +1,7 @@
 <div align="center">
-  <img src="docs/assets/shortlink-logo-tech.png" width="170" alt="抖音短链接系统 Logo" />
-  <h1>抖音短链接系统</h1>
+  <img src="docs/assets/shortlink-logo-tech.png" width="170" alt="LinkFlow Logo" />
+  <h1>LinkFlow</h1>
+  <p>短链接管理与访问分析平台</p>
   <p>让分享更轻便，让访问可追踪。</p>
   <p>短链生成 · 分组管理 · 访问分析 · 全栈管理控制台</p>
   <p>
@@ -10,14 +11,14 @@
     <img src="https://img.shields.io/badge/Redis-Stream-DC2626?style=flat-square" alt="Redis Stream" />
     <img src="https://img.shields.io/badge/ShardingSphere-5-7C3AED?style=flat-square" alt="ShardingSphere 5" />
   </p>
-  <p><a href="#系统架构">系统架构</a> · <a href="#核心技术栈">技术栈</a> · <a href="#快速开始">快速开始</a> · <a href="启动.md">完整启动指南</a></p>
+  <p><a href="#系统架构">系统架构</a> · <a href="#核心技术栈">技术栈</a> · <a href="#快速开始">快速开始</a></p>
 </div>
 
 ## 项目介绍
 
-这是一个面向短视频分享与内容推广场景的全栈短链接管理项目，提供长链接转换、批量创建、分组管理、回收站与访问分析功能。管理端负责链接运营，跳转端通过缓存和异步统计处理访问请求，帮助使用者观察内容的传播情况。
+LinkFlow 面向短视频分享与内容推广场景，提供长链接转换、批量创建、分组管理、回收站与访问分析功能。管理端负责链接运营，跳转端借助缓存与异步统计处理访问请求，帮助使用者了解链接的传播效果。
 
-项目名称用于描述业务场景，非抖音官方产品；当前不依赖抖音开放平台，也不读取抖音账号、播放量或订单数据。
+短视频分享是项目的示例场景；系统不依赖第三方内容平台的账号或数据接口。
 
 ## 核心能力
 
@@ -32,7 +33,20 @@
 
 ## 系统架构
 
-![抖音短链接系统架构](docs/assets/shortlink-architecture.png)
+```mermaid
+flowchart LR
+    C[Vue 3 管理控制台] --> G[Gateway]
+    G --> A[Admin 管理服务]
+    A --> P[Project 短链服务]
+    V[短链访问者] --> P
+    P --> R[Redis 缓存与锁]
+    P --> D[ShardingSphere / MySQL]
+    P --> Q[Redis Stream]
+    Q --> S[统计消费者]
+    S --> D
+```
+
+本地可使用 Aggregation 合并运行 Admin 与 Project；Gateway 在聚合模式下路由管理接口，短链访问直接到达聚合服务。
 
 ## 核心技术栈
 
@@ -106,4 +120,4 @@ npm run dev -- --host 127.0.0.1 --port 8990
 
 访问 **http://127.0.0.1:8990**，注册用户后创建分组，再创建短链验证跳转和访问统计。默认目标域名白名单已开启，可先用 `https://www.zhihu.com` 测试。
 
-完整的 Windows 环境准备、环境变量设置、微服务模式、端口检查和停止步骤见 [启动指南](启动.md)。地域分析需要配置 `AMAP_KEY`；未配置时相关维度可能不完整。
+地域分析需要配置 `AMAP_KEY`；未配置时相关维度可能不完整。
