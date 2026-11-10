@@ -75,6 +75,9 @@ Desktop.ini
 ### Personal notes ###
 /优化.md
 /启动.md
+/start-local-env.ps1
+/启动基础环境.cmd
+/启动前端.cmd
 /短链接系统核心功能源码整理.docx
 /shortlink-面试问答详解.md
 /resources/database/link-data.sql

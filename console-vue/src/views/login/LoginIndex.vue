@@ -1,6 +1,7 @@
 <template>
   <div class="login-page">
-    <h1 class="title">抖音短链接系统(小马鸽)</h1>
+    <div class="login-panel">
+    <h1 class="title">LINKFLOW</h1>
     <div class="login-box">
       <!-- 登录 -->
       <div class="logon" :class="{ hidden: !isLogin }">
@@ -99,6 +100,7 @@
           !isLogin ? '去登录' : '去注册'
         }}</el-button>
       </div>
+    </div>
     </div>
     <div ref="vantaRef" class="vanta"></div>
   </div>
@@ -340,6 +342,16 @@ const changeLogin = () => {
 </script>
 
 <style lang="less" scoped>
+.login-panel {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 700px;
+  max-width: calc(100% - 32px);
+  z-index: 999;
+}
+
 .login-box {
   border: 2px solid #0984e3;
   overflow: hidden;
@@ -347,13 +359,10 @@ const changeLogin = () => {
   justify-content: space-between;
   border-radius: 20px;
   padding: 0 40px 0 40px;
-  width: 700px;
+  width: 100%;
   // background-color: #eee;
-  position: absolute;
+  position: relative;
   z-index: 999;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
   box-sizing: border-box;
   // border: 1px solid #eee;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
@@ -408,12 +417,12 @@ const changeLogin = () => {
   // <!--具体细节自己可以调整-->
   0% {
     opacity: 0;
-    transform: translate(7.3125rem, -50%);
+    transform: translateX(7.3125rem);
   }
 
   100% {
     opacity: 1;
-    transform: translate(-50%, -50%);
+    transform: translateX(0);
   }
 }
 
@@ -421,6 +430,7 @@ const changeLogin = () => {
   position: relative;
   width: 100vw;
   height: 100vh;
+  min-height: 640px;
   overflow: hidden;
 }
 
@@ -484,11 +494,16 @@ const changeLogin = () => {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  top: 15%;
+  bottom: calc(100% + 32px);
+  margin: 0;
   z-index: 999;
-  font-size: 40px;
+  font-family: Arial, sans-serif;
+  font-size: clamp(32px, 5vw, 56px);
+  line-height: 1.15;
+  letter-spacing: 6px;
+  white-space: nowrap;
   color: #fff;
-  font-weight: bolder;
+  font-weight: 700;
 }
 
 :deep(.el-input__suffix-inner) {

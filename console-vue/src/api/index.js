@@ -1,4 +1,4 @@
-const req = import.meta.globEager('./modules/*.js')
+const req = import.meta.glob('./modules/*.js', { eager: true })
 const api = {}
 for (const key in req) {
   const name = key.replace(/^\.\/modules\/(.*)\.\w+$/, '$1') // 取文件名

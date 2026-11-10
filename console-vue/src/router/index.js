@@ -48,7 +48,7 @@ const router = createRouter({
 router.beforeEach(async (to, from, next) => {
   const token = getToken()
   if (to.path === '/login') {
-    next()
+    return next()
   }
   if (isNotEmpty(token)) {
     next()
