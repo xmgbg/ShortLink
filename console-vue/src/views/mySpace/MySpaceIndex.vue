@@ -102,7 +102,14 @@
               <div class="table-link-box" :class="{
                 isExpire: scope?.row?.validDateType === 1 && !isExpire(scope?.row?.validDate)
               }">
-                <img :src="getImgUrl(scope.row.favicon)" :key="scope?.row?.id" width="20" height="20" alt="" />
+                <img
+                  :src="getImgUrl(scope.row.favicon)"
+                  :key="scope?.row?.id"
+                  width="20"
+                  height="20"
+                  alt=""
+                  @error="useDefaultIcon"
+                />
                 <div class="name-date">
                   <el-tooltip show-after="500" :content="scope.row.describe">
                     <span>{{ scope.row.describe }}</span>
@@ -726,7 +733,13 @@ const cancelAddLink = () => {
   isAddSmallLinks.value = false
 }
 const getImgUrl = (url) => {
-  return url ?? defaultImg
+  return url || defaultImg
+}
+const useDefaultIcon = (event) => {
+  const img = event.currentTarget
+  if (img.getAttribute('src') !== defaultImg) {
+    img.src = defaultImg
+  }
 }
 // 判断链接是否过期
 const isExpire = (validDate) => {
