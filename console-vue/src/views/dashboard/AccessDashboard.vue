@@ -23,21 +23,23 @@
         </div>
       </header>
       <div v-if="error" class="notice panel" role="alert">
-        {{ error }} <el-button link type="primary" @click="loadGroups">重试</el-button>
+        {{ error }} <el-button link type="primary" @click="retry">重试</el-button>
       </div>
       <div v-else-if="!groupLoading && !groups.length" class="notice panel">暂无短链分组</div>
-      <div v-else class="report" v-loading="groupLoading">
+      <div v-else class="report" v-loading="groupLoading || loading">
         <div class="metrics">
-          <div v-for="title in metrics" :key="title" class="panel metric">
-            <span>{{ title }}</span><strong>—</strong>
+          <div v-for="[key, title] in metrics" :key="key" class="panel metric">
+            <span>{{ title }}</span><strong>{{ loading || groupLoading ? '—' : format(stats?.[key]) }}</strong>
           </div>
         </div>
         <div class="charts">
           <section class="panel"><h2>访问趋势</h2>
-            <p class="empty">该时段暂无访问记录</p>
+            <DashboardChart v-if="stats?.daily?.length" :option="trend" label="按日期统计的访问次数折线图" />
+            <p v-else class="empty">该时段暂无访问记录</p>
           </section>
           <section class="panel"><h2>设备分布</h2>
-            <p class="empty">该时段暂无设备数据</p>
+            <DashboardChart v-if="devices.length" :option="deviceChart" label="各类设备访问占比" />
+            <p v-else class="empty">该时段暂无设备数据</p>
           </section>
         </div>
         <section class="panel"><h2>热门短链</h2>
@@ -46,10 +48,15 @@
         </section>
         <el-collapse v-model="expanded" class="panel details">
           <el-collapse-item title="访问时段" name="hours">
-            <p class="pending">该时段暂无访问记录</p>
+            <DashboardChart v-if="stats?.hourStats?.length && expanded.includes('hours')" :option="hourChart" label="按小时统计的访问次数柱状图" />
+            <p v-else class="pending">该时段暂无访问记录</p>
           </el-collapse-item>
           <el-collapse-item title="地区分布" name="regions">
-            <p class="pending">该时段暂无地区数据</p>
+            <el-table v-if="regions.length" :data="regions" size="small">
+              <el-table-column prop="locale" label="省份" />
+              <el-table-column prop="cnt" label="访问次数" align="right" />
+            </el-table>
+            <p v-else class="pending">该时段暂无地区数据</p>
           </el-collapse-item>
         </el-collapse>
       </div>
@@ -58,25 +65,31 @@
 </template>
 
 <script setup>
-import { inject, onMounted, ref } from 'vue'
+import { computed, inject, onMounted, ref, watch } from 'vue'
 import dayjs from 'dayjs'
 import groupApi from '@/api/modules/group'
 import { getUsername } from '@/core/auth'
+import DashboardChart from './DashboardChart.vue'
 
 const gid = inject('activeLinkGroup')
 const username = getUsername()
 const groups = ref([])
 const groupLoading = ref(true)
+const loading = ref(false)
 const error = ref('')
+const stats = ref(null)
 const expanded = ref([])
 const period = ref('7')
-const metrics = ['访问次数（PV）', '独立访客（UV）', '独立 IP 数']
+const refresh = ref(0)
+const metrics = [['pv', '访问次数（PV）'], ['uv', '独立访客（UV）'], ['uip', '独立 IP 数']]
+const format = value => Number(value || 0).toLocaleString('zh-CN')
 const isFuture = date => dayjs(date).isAfter(dayjs(), 'day')
 function recent(days) {
   const today = dayjs()
   return [today.subtract(days - 1, 'day').format('YYYY-MM-DD'), today.format('YYYY-MM-DD')]
 }
 const customRange = ref(recent(7))
+const range = computed(() => period.value === 'custom' ? customRange.value : recent(Number(period.value)))
 
 async function loadGroups() {
   groupLoading.value = true
@@ -93,6 +106,58 @@ async function loadGroups() {
   }
 }
 onMounted(loadGroups)
+function retry() {
+  if (groups.value.length) refresh.value++
+  else loadGroups()
+}
+watch([gid, range, groupLoading, refresh], async ([group, dates, waiting], _, onCleanup) => {
+  if (waiting || !groups.value.length || !group || !dates?.length) return
+  let active = true
+  onCleanup(() => { active = false })
+  loading.value = true
+  error.value = ''
+  stats.value = null
+  try {
+    const { data } = await groupApi.queryGroupStats({
+      gid: group, startDate: dates[0] + ' 00:00:00', endDate: dates[1] + ' 23:59:59'
+    })
+    if (!data.success) throw new Error(data.message || '无法加载访问统计')
+    if (active) stats.value = data.data
+  } catch (e) {
+    if (active) error.value = e.message || '无法加载访问统计'
+  } finally {
+    if (active) loading.value = false
+  }
+})
+
+const blue = '#2c85ec'
+function timeChart(labels, values, type) {
+  return {
+    color: [blue], tooltip: { trigger: 'axis', confine: true },
+    grid: { top: 16, left: 48, right: 24, bottom: 28 },
+    xAxis: { type: 'category', data: labels, boundaryGap: type === 'bar', axisLabel: { hideOverlap: true } },
+    yAxis: { type: 'value', minInterval: 1, splitLine: { lineStyle: { color: '#ebeef5' } } },
+    series: [{ name: '访问次数', type, data: values, barMaxWidth: 22,
+      areaStyle: type === 'line' ? { opacity: 0.08 } : undefined }]
+  }
+}
+const trend = computed(() => {
+  const daily = stats.value?.daily || []
+  return timeChart(daily.map(day => day.date.slice(5)), daily.map(day => day.pv), 'line')
+})
+const hourChart = computed(() => {
+  const hours = stats.value?.hourStats || []
+  return timeChart(hours.map((_, i) => i + '时'), hours, 'bar')
+})
+const devices = computed(() => (stats.value?.deviceStats || []).filter(item => item.cnt > 0).map(item => ({
+  name: ({ PC: '电脑', Mobile: '手机' })[item.device] || item.device, value: item.cnt
+})))
+const deviceChart = computed(() => ({
+  color: [blue, '#86bcfa', '#a8b2c0'], tooltip: { trigger: 'item', confine: true },
+  legend: { bottom: 0 }, series: [{ type: 'pie', radius: ['40%', '62%'], center: ['50%', '43%'],
+    label: { formatter: '{d}%' }, data: devices.value }]
+}))
+const regions = computed(() => [...(stats.value?.localeCnStats || [])].sort((a, b) => b.cnt - a.cnt))
 </script>
 
 <style scoped>
