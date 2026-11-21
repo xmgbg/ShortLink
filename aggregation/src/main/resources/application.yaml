@@ -32,7 +32,7 @@ short-link:
     time-window: 1
     max-access-count: 20
   domain:
-    default: xmgbg:8003
+    default: xmgbg.top
   demo-mode:
     enable: false
     blacklist:

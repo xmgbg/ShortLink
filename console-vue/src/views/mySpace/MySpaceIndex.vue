@@ -378,7 +378,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, getCurrentInstance, watch, nextTick } from 'vue'
+import { ref, reactive, onMounted, getCurrentInstance, watch, nextTick, inject } from 'vue'
 import Sortable from 'sortablejs'
 import { cloneDeep } from 'lodash'
 import ChartsInfo from './components/chartsInfo/ChartsInfo.vue'
@@ -406,6 +406,7 @@ const createLink1Ref = ref()
 const createLink2Ref = ref()
 let selectedIndex = ref(0)
 const editableTabs = ref([])
+const activeLinkGroup = inject('activeLinkGroup')
 // 添加弹窗关闭后重新请求一下页面数据
 const afterAddLink = () => {
   setTimeout(() => {
@@ -604,6 +605,7 @@ const totalNums = ref(0)
 // 数据变化后更新当前页面
 const queryPage = async () => {
   pageParams.gid = editableTabs.value?.[selectedIndex.value]?.gid
+  if (pageParams.gid) activeLinkGroup.value = pageParams.gid
   nums.value = editableTabs.value?.[selectedIndex.value]?.shortLinkCount || 0
   const res = await API.smallLinkPage.queryPage(pageParams)
   if (res?.data.success) {
@@ -628,7 +630,11 @@ const getGroupInfo = async (fn) => {
   editableTabs.value = res.data?.data?.reverse()
   fn && fn()
 }
-getGroupInfo(queryPage)
+getGroupInfo(() => {
+  const index = editableTabs.value?.findIndex(group => group.gid === activeLinkGroup.value)
+  if (index > 0) selectedIndex.value = index
+  else queryPage()
+})
 
 const updatePage = () => {
   getGroupInfo(queryPage)

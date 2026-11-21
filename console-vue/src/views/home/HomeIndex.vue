@@ -3,7 +3,11 @@
     <el-container>
       <el-header height="54px" style="padding: 0">
         <div class="header">
-          <div @click="toMySpace" class="logo">抖音短链接系统@小马鸽</div>
+          <div @click="toMySpace" class="logo">LINKFLOW</div>
+          <nav class="page-nav" aria-label="主导航">
+            <RouterLink to="/home/space">短链管理</RouterLink>
+            <RouterLink to="/home/dashboard">访问看板</RouterLink>
+          </nav>
           <el-dropdown>
               <div class="block">
                 <span
@@ -51,7 +55,7 @@
 </template>
 
 <script setup>
-import { ref, getCurrentInstance, onMounted } from 'vue'
+import { ref, getCurrentInstance, onMounted, provide } from 'vue'
 import { useRouter } from 'vue-router'
 import { removeKey, removeUsername, getToken, getUsername } from '@/core/auth.js'
 import { ElMessage } from 'element-plus'
@@ -59,6 +63,7 @@ const { proxy } = getCurrentInstance()
 const API = proxy.$API
 // 当当前路径和菜单不匹配时，菜单不会被选中
 const router = useRouter()
+provide('activeLinkGroup', ref(''))
 const squareUrl = ref('https://cube.elemecdn.com/9/c2/f0ee8a3c7c9638a54940382568c9dpng.png')
 const toMine = () => {
   router.push('/home' + '/account')
@@ -121,7 +126,7 @@ const truncateText = (text, maxLength) => {
 
 .header {
   color: rgba(0,0,0,.85);
-  background-color: #252b30;
+  background-color: #4594ee;
   padding: 0 0 0 20px;
   height: 100%;
   display: flex;
@@ -157,6 +162,15 @@ const truncateText = (text, maxLength) => {
 
 .logo:hover {
   color: #fff;
+}
+
+.page-nav {
+  display: flex;
+  gap: 18px;
+  margin: 0 auto 0 24px;
+  align-items: center;
+  a { color: white; font-size: 14px; padding: 5px 0; }
+  a.router-link-active { box-shadow: 0 2px white; font-weight: 600; }
 }
 
 .link-span {

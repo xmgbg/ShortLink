@@ -28,6 +28,12 @@ const router = createRouter({
           meta: { title: '我的空间' }
         },
         {
+          path: 'dashboard',
+          name: 'AccessDashboard',
+          component: () => import('@/views/dashboard/AccessDashboard.vue'),
+          meta: { title: '访问看板' }
+        },
+        {
           path: 'recycleBin',
           name: 'RecycleBin',
           component: () => import('@/views/recycleBin/RecycleBinIndex.vue'),
