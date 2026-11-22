@@ -1,7 +1,7 @@
 <template>
   <el-dialog v-model="dialogVisible" :title="props.title" width="70%" :before-close="handleClose">
     <template #header>
-      <div style="display: flex">
+      <div ref="dialogHeading" style="display: flex">
         <img v-if="!isGroup" :src="getImgUrl(props.favicon)" width="25" height="25" alt="" />
         <div style="display: flex; flex-direction: column; margin-left: 5px">
           <span style="font-size: 25px; line-height: 25px; font-weight: 550">{{
@@ -36,15 +36,15 @@
                 <div v-show="isLine" class="top10" style="padding-top: 20px">
                   <div class="key-value" style="margin-top: 10px">
                     <span>访问次数</span>
-                    <span>{{ totalPv }}</span>
+                    <span>{{ props.info?.pv ?? 0 }}</span>
                   </div>
                   <div class="key-value" style="margin-top: 10px">
                     <span>访问人数</span>
-                    <span>{{ totalUv }}</span>
+                    <span>{{ props.info?.uv ?? 0 }}</span>
                   </div>
                   <div class="key-value" style="margin-top: 10px">
                     <span>访问IP数</span>
-                    <span>{{ totalUip }}</span>
+                    <span>{{ props.info?.uip ?? 0 }}</span>
                   </div>
                 </div>
                 <!-- 折线图 -->
@@ -193,7 +193,7 @@
 </template>
 
 <script setup>
-import { ref, watch, reactive } from 'vue'
+import { ref, watch, reactive, onBeforeUnmount } from 'vue'
 import TitleContent from './TitleContent.vue'
 import * as echarts from 'echarts'
 import '@/assets/maps/china.js'
@@ -335,14 +335,15 @@ const getUrl4 = (img) => {
   }
 }
 const dateValue = ref([getLastWeekFormatDate(), getTodayFormatDate()])
-const emit = defineEmits(['changeTime', 'changePage'])
+const emit = defineEmits(['changeTime', 'changePage', 'closed'])
 watch(
   () => dateValue.value,
   (newValue) => {
     // 解决首次关闭数据统计页面需要点两次关闭键的bug
-    if (!newValue && !dialogVisible.value) {
+    if (!dialogVisible.value) {
       return
     }
+    pageParams.current = 1
     emit('changeTime', newValue)
   }
 )
@@ -399,6 +400,11 @@ watch(
 //   }
 // )
 const dialogVisible = ref(false)
+const dialogHeading = ref(null)
+onBeforeUnmount(() => {
+  const dialog = dialogHeading.value?.closest('.el-dialog')
+  dialog?.querySelectorAll('[_echarts_instance_]').forEach(node => echarts.getInstanceByDom(node)?.dispose())
+})
 const handleClose = () => {
   dateValue.value = null
   unVisible()
@@ -406,11 +412,13 @@ const handleClose = () => {
   dateValue.value = [getLastWeekFormatDate(), getTodayFormatDate()]
   document.querySelector('.scroll-box').scrollTop = 0
 }
-const isVisible = () => {
+const isVisible = (range) => {
   dialogVisible.value = true
+  if (range) dateValue.value = [...range]
 }
 const unVisible = () => {
   dialogVisible.value = false
+  emit('closed')
 }
 defineExpose({
   unVisible,
@@ -808,16 +816,10 @@ const initLineChart = () => {
   }
   lineChart.setOption(option)
 }
-// 总访问次数
-const totalPv = ref(0)
 // 访问次数数据集数组
 const pvList = ref([])
-// 总访问人数
-const totalUv = ref(0)
 // 访问人数数据集数组
 const uvList = ref([])
-// 总访问IP数
-const totalUip = ref(0)
 // 访问IP数数据集数组
 const uipList = ref([])
 // 更新数据
@@ -825,21 +827,15 @@ watch(
   () => props?.info?.daily,
   () => {
     // 归零
-    totalPv.value = 0
-    totalUv.value = 0
-    totalUip.value = 0
     pvList.value = []
     uvList.value = []
     uipList.value = []
     dailyXAxis.value = []
     visitsData.value = props?.info?.daily
-    // 获取总数量和数据集数组
+    // 按天绘制访问曲线
     visitsData?.value?.forEach((item) => {
       const { pv, uv, uip, date } = item
       const formDate = date.split('-')[1] + '月' + date.split('-')[2] + '日'
-      totalPv.value += pv
-      totalUv.value += uv
-      totalUip.value += uip
       pvList.value.push(pv)
       uvList.value.push(uv)
       uipList.value.push(uip)

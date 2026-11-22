@@ -17,6 +17,7 @@
 
 package com.nageoffer.shortlink.admin.controller;
 
+import com.nageoffer.shortlink.admin.remote.dto.resp.ShortLinkRankRespDTO;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.nageoffer.shortlink.admin.common.convention.result.Result;
 import com.nageoffer.shortlink.admin.remote.ShortLinkActualRemoteService;
@@ -29,6 +30,8 @@ import com.nageoffer.shortlink.admin.remote.dto.resp.ShortLinkStatsRespDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 /**
  * 短链接监控控制层
@@ -93,5 +96,10 @@ public class ShortLinkStatsController {
                 requestParam.getCurrent(),
                 requestParam.getSize()
         );
+    }
+
+    @GetMapping("/api/short-link/admin/v1/stats/group/ranking")
+    public Result<List<ShortLinkRankRespDTO>> rankByGroup(ShortLinkGroupStatsReqDTO param) {
+        return shortLinkActualRemoteService.rankByGroup(param.getGid(), param.getStartDate(), param.getEndDate());
     }
 }

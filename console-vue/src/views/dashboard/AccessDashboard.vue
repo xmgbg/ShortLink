@@ -42,9 +42,17 @@
             <p v-else class="empty">该时段暂无设备数据</p>
           </section>
         </div>
-        <section class="panel"><h2>热门短链</h2>
-          <div class="rank-head"><span>短链名称</span><span>短链地址</span><span>访问次数</span></div>
-          <p class="pending">所选时段的排行暂未开放</p>
+        <section class="panel"><h2>热门短链 <small>按访问次数取前 5 条</small></h2>
+          <p v-if="rankError" role="alert">{{ rankError }} <el-button link @click="retry">重试</el-button></p>
+          <el-table v-else :data="ranking" size="small" empty-text="该时段暂无访问记录" @row-click="detail = $event">
+            <el-table-column type="index" label="排名" width="54" />
+            <el-table-column prop="title" label="短链名称" min-width="130" show-overflow-tooltip />
+            <el-table-column prop="fullShortUrl" label="短链地址" min-width="150" show-overflow-tooltip />
+            <el-table-column prop="pv" label="访问次数" width="84" align="right" />
+            <el-table-column label="操作" width="92" align="center">
+              <template #default="{ row }"><el-button link type="primary" @click.stop="detail = row">查看统计</el-button></template>
+            </el-table-column>
+          </el-table>
         </section>
         <el-collapse v-model="expanded" class="panel details">
           <el-collapse-item title="访问时段" name="hours">
@@ -60,16 +68,22 @@
           </el-collapse-item>
         </el-collapse>
       </div>
+      <RankedLinkDetail v-if="detail" :key="detail.fullShortUrl" :link="detail" :gid="gid" :range="range" @closed="detail = null" />
     </section>
   </div>
 </template>
 
 <script setup>
-import { computed, inject, onMounted, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, inject, onMounted, ref, watch } from 'vue'
 import dayjs from 'dayjs'
 import groupApi from '@/api/modules/group'
 import { getUsername } from '@/core/auth'
 import DashboardChart from './DashboardChart.vue'
+
+const RankedLinkDetail = defineAsyncComponent(() => import('./RankedLinkDetail.vue'))
+const detail = ref(null)
+const ranking = ref([])
+const rankError = ref('')
 
 const gid = inject('activeLinkGroup')
 const username = getUsername()
@@ -90,6 +104,14 @@ function recent(days) {
 }
 const customRange = ref(recent(7))
 const range = computed(() => period.value === 'custom' ? customRange.value : recent(Number(period.value)))
+
+async function loadRanking(group, dates) {
+  const { data } = await groupApi.queryGroupRanking({
+    gid: group, startDate: dates[0] + ' 00:00:00', endDate: dates[1] + ' 23:59:59'
+  })
+  if (!data.success) throw Error(data.message || '无法加载短链排行')
+  return data.data || []
+}
 
 async function loadGroups() {
   groupLoading.value = true
@@ -117,6 +139,14 @@ watch([gid, range, groupLoading, refresh], async ([group, dates, waiting], _, on
   loading.value = true
   error.value = ''
   stats.value = null
+  ranking.value = []
+  rankError.value = ''
+  detail.value = null
+  const rankRequest = loadRanking(group, dates).then(rows => {
+    if (active) ranking.value = rows
+  }).catch(e => {
+    if (active) rankError.value = e.message || '无法加载短链排行'
+  })
   try {
     const { data } = await groupApi.queryGroupStats({
       gid: group, startDate: dates[0] + ' 00:00:00', endDate: dates[1] + ' 23:59:59'
@@ -126,6 +156,7 @@ watch([gid, range, groupLoading, refresh], async ([group, dates, waiting], _, on
   } catch (e) {
     if (active) error.value = e.message || '无法加载访问统计'
   } finally {
+    await rankRequest
     if (active) loading.value = false
   }
 })
@@ -181,7 +212,7 @@ h1 { font-size: 19px; } h2 { font-size: 15px; margin: 0 0 12px; }
 .charts { grid-template-columns: minmax(0, 2.3fr) minmax(220px, 1fr); }
 .empty, .pending { text-align: center; padding: 18px 0; }
 .empty { height: 216px; align-content: center; }
-.rank-head { display: grid; grid-template-columns: 1fr 1fr auto; background: #f7f8fa; padding: 7px 12px; font-size: 13px; }
+h2 small { font-size: 12px; font-weight: 400; color: #606266; }
 .details { padding-block: 0; }
 @media (max-width: 760px) {
   aside { display: none; }

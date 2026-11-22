@@ -47,6 +47,10 @@ export default {
       url: 'stats/group'
     })
   },
+  // 按日期范围查询热门短链
+  queryGroupRanking(params) {
+    return http.get('/stats/group/ranking', { params })
+  },
   // 查询分组的访问记录
   queryGroupTable(data) {
     return http({

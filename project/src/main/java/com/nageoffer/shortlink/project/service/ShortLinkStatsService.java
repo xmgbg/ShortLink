@@ -17,6 +17,7 @@
 
 package com.nageoffer.shortlink.project.service;
 
+import com.nageoffer.shortlink.project.dto.resp.ShortLinkRankRespDTO;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.nageoffer.shortlink.project.dto.req.ShortLinkGroupStatsAccessRecordReqDTO;
 import com.nageoffer.shortlink.project.dto.req.ShortLinkGroupStatsReqDTO;
@@ -24,6 +25,8 @@ import com.nageoffer.shortlink.project.dto.req.ShortLinkStatsAccessRecordReqDTO;
 import com.nageoffer.shortlink.project.dto.req.ShortLinkStatsReqDTO;
 import com.nageoffer.shortlink.project.dto.resp.ShortLinkStatsAccessRecordRespDTO;
 import com.nageoffer.shortlink.project.dto.resp.ShortLinkStatsRespDTO;
+
+import java.util.List;
 
 /**
  * 短链接监控接口层
@@ -61,4 +64,6 @@ public interface ShortLinkStatsService {
      * @return 分组访问记录监控数据
      */
     IPage<ShortLinkStatsAccessRecordRespDTO> groupShortLinkStatsAccessRecord(ShortLinkGroupStatsAccessRecordReqDTO requestParam);
+
+    List<ShortLinkRankRespDTO> rankByGroup(ShortLinkGroupStatsReqDTO param);
 }

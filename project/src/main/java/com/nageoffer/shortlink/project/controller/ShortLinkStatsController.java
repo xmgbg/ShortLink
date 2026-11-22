@@ -17,6 +17,7 @@
 
 package com.nageoffer.shortlink.project.controller;
 
+import com.nageoffer.shortlink.project.dto.resp.ShortLinkRankRespDTO;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.nageoffer.shortlink.project.common.convention.result.Result;
 import com.nageoffer.shortlink.project.common.convention.result.Results;
@@ -30,6 +31,8 @@ import com.nageoffer.shortlink.project.service.ShortLinkStatsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 /**
  * 短链接监控控制层
@@ -70,5 +73,10 @@ public class ShortLinkStatsController {
     @GetMapping("/api/short-link/v1/stats/access-record/group")
     public Result<IPage<ShortLinkStatsAccessRecordRespDTO>> groupShortLinkStatsAccessRecord(ShortLinkGroupStatsAccessRecordReqDTO requestParam) {
         return Results.success(shortLinkStatsService.groupShortLinkStatsAccessRecord(requestParam));
+    }
+
+    @GetMapping("/api/short-link/v1/stats/group/ranking")
+    public Result<List<ShortLinkRankRespDTO>> rankByGroup(ShortLinkGroupStatsReqDTO param) {
+        return Results.success(shortLinkStatsService.rankByGroup(param));
     }
 }

@@ -17,6 +17,7 @@
 
 package com.nageoffer.shortlink.project.dao.mapper;
 
+import com.nageoffer.shortlink.project.dto.resp.ShortLinkRankRespDTO;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.nageoffer.shortlink.project.dao.entity.LinkAccessStatsDO;
 import com.nageoffer.shortlink.project.dto.req.ShortLinkGroupStatsReqDTO;
@@ -155,4 +156,16 @@ public interface LinkAccessStatsMapper extends BaseMapper<LinkAccessStatsDO> {
             "GROUP BY " +
             "    tl.gid, tlas.weekday;")
     List<LinkAccessStatsDO> listWeekdayStatsByGroup(@Param("param") ShortLinkGroupStatsReqDTO requestParam);
+
+    @Select("""
+            SELECT MAX(t.`describe`) AS title, t.full_short_url AS fullShortUrl,
+                   MAX(t.origin_url) AS originUrl, MAX(t.favicon) AS favicon, SUM(s.pv) AS pv
+            FROM t_link t JOIN t_link_access_stats s ON s.full_short_url = t.full_short_url
+            WHERE t.gid = #{param.gid} AND t.del_flag = 0 AND t.enable_status = 0
+              AND s.date BETWEEN CAST(#{param.startDate} AS DATETIME) AND CAST(#{param.endDate} AS DATETIME)
+            GROUP BY t.full_short_url
+            HAVING SUM(s.pv) > 0
+            ORDER BY pv DESC, t.full_short_url ASC LIMIT 5
+            """)
+    List<ShortLinkRankRespDTO> rankByGroup(@Param("param") ShortLinkGroupStatsReqDTO param);
 }

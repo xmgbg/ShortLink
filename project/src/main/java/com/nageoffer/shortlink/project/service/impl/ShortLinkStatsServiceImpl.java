@@ -17,6 +17,7 @@
 
 package com.nageoffer.shortlink.project.service.impl;
 
+import com.nageoffer.shortlink.project.dto.resp.ShortLinkRankRespDTO;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateField;
@@ -520,5 +521,11 @@ public class ShortLinkStatsServiceImpl implements ShortLinkStatsService {
         if (CollUtil.isEmpty(groupDOList)) {
             throw new ServiceException("用户信息与分组标识不匹配");
         }
+    }
+
+    @Override
+    public List<ShortLinkRankRespDTO> rankByGroup(ShortLinkGroupStatsReqDTO param) {
+        checkGroupBelongToUser(param.getGid());
+        return linkAccessStatsMapper.rankByGroup(param);
     }
 }

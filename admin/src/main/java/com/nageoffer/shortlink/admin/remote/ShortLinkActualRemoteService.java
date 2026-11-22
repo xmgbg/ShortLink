@@ -17,6 +17,7 @@
 
 package com.nageoffer.shortlink.admin.remote;
 
+import com.nageoffer.shortlink.admin.remote.dto.resp.ShortLinkRankRespDTO;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.nageoffer.shortlink.admin.common.convention.result.Result;
 import com.nageoffer.shortlink.admin.config.OpenFeignConfiguration;
@@ -212,4 +213,9 @@ public interface ShortLinkActualRemoteService {
                                                                                     @RequestParam("endDate") String endDate,
                                                                                     @RequestParam("current") Long current,
                                                                                     @RequestParam("size") Long size);
+
+    @GetMapping("/api/short-link/v1/stats/group/ranking")
+    Result<List<ShortLinkRankRespDTO>> rankByGroup(@RequestParam("gid") String gid,
+                                                  @RequestParam("startDate") String startDate,
+                                                  @RequestParam("endDate") String endDate);
 }
