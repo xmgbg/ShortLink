@@ -206,6 +206,16 @@ public interface LinkAccessLogsMapper extends BaseMapper<LinkAccessLogsDO> {
             "    tl.gid;")
     LinkAccessStatsDO findPvUvUidStatsByGroup(@Param("param") ShortLinkGroupStatsReqDTO requestParam);
 
+    @Select("""
+            SELECT CAST(l.create_time AS DATE) AS date, COUNT(*) AS pv,
+                   COUNT(DISTINCT l.user) AS uv, COUNT(DISTINCT l.ip) AS uip
+            FROM t_link t JOIN t_link_access_logs l ON t.full_short_url = l.full_short_url
+            WHERE t.gid = #{param.gid} AND t.del_flag = 0 AND t.enable_status = 0
+              AND l.create_time BETWEEN CAST(#{param.startDate} AS DATETIME) AND CAST(#{param.endDate} AS DATETIME)
+            GROUP BY CAST(l.create_time AS DATE)
+            """)
+    List<LinkAccessStatsDO> listDailyStatsByGroup(@Param("param") ShortLinkGroupStatsReqDTO requestParam);
+
     @Select("SELECT " +
             "    tlal.* " +
             "FROM " +

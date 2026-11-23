@@ -60,12 +60,15 @@ import com.nageoffer.shortlink.project.service.ShortLinkStatsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -284,7 +287,7 @@ public class ShortLinkStatsServiceImpl implements ShortLinkStatsService {
     @Override
     public ShortLinkStatsRespDTO groupShortLinkStats(ShortLinkGroupStatsReqDTO requestParam) {
         checkGroupBelongToUser(requestParam.getGid());
-        List<LinkAccessStatsDO> listStatsByGroup = linkAccessStatsMapper.listStatsByGroup(requestParam);
+        List<LinkAccessStatsDO> listStatsByGroup = linkAccessLogsMapper.listDailyStatsByGroup(requestParam);
         if (CollUtil.isEmpty(listStatsByGroup)) {
             return null;
         }
@@ -429,11 +432,16 @@ public class ShortLinkStatsServiceImpl implements ShortLinkStatsService {
                     .build();
             networkStats.add(networkRespDTO);
         });
+        LocalDate startDate = LocalDate.parse(rangeDates.get(0));
+        LocalDate endDate = LocalDate.parse(rangeDates.get(rangeDates.size() - 1));
+        List<LinkAccessStatsDO> dailyLinkPv = linkAccessStatsMapper.listDailyLinkPv(
+                requestParam.getGid(), startDate.minusDays(1), endDate);
         return ShortLinkStatsRespDTO.builder()
                 .pv(pvUvUidStatsByGroup.getPv())
                 .uv(pvUvUidStatsByGroup.getUv())
                 .uip(pvUvUidStatsByGroup.getUip())
                 .daily(daily)
+                .spikeDates(spikeDates(dailyLinkPv, startDate))
                 .localeCnStats(localeCnStats)
                 .hourStats(hourStats)
                 .topIpStats(topIpStats)
@@ -521,6 +529,24 @@ public class ShortLinkStatsServiceImpl implements ShortLinkStatsService {
         if (CollUtil.isEmpty(groupDOList)) {
             throw new ServiceException("用户信息与分组标识不匹配");
         }
+    }
+
+    private static List<String> spikeDates(List<LinkAccessStatsDO> rows, LocalDate startDate) {
+        Map<String, Map<LocalDate, Integer>> visitsByLink = new HashMap<>();
+        for (LinkAccessStatsDO row : rows) {
+            LocalDate day = LocalDate.parse(DateUtil.formatDate(row.getDate()));
+            visitsByLink.computeIfAbsent(row.getFullShortUrl(), key -> new HashMap<>()).put(day, row.getPv());
+        }
+        Set<String> dates = new TreeSet<>();
+        for (Map<LocalDate, Integer> visits : visitsByLink.values()) {
+            visits.forEach((day, pv) -> {
+                int previous = visits.getOrDefault(day.minusDays(1), 0);
+                if (!day.isBefore(startDate) && pv - previous >= 10 && pv >= 2L * previous) {
+                    dates.add(day.toString());
+                }
+            });
+        }
+        return List.copyOf(dates);
     }
 
     @Override

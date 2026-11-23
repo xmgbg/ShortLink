@@ -20,6 +20,7 @@
           <el-date-picker v-if="period === 'custom'" v-model="customRange" type="daterange"
             value-format="YYYY-MM-DD" :clearable="false" :disabled-date="isFuture"
             start-placeholder="开始日期" end-placeholder="结束日期" range-separator="至" />
+          <el-button :disabled="groupLoading || loading || !gid || !!error || !!rankError" @click="exportReport">导出统计</el-button>
         </div>
       </header>
       <div v-if="error" class="notice panel" role="alert">
@@ -34,8 +35,24 @@
         </div>
         <div class="charts">
           <section class="panel"><h2>访问趋势</h2>
-            <DashboardChart v-if="stats?.daily?.length" :option="trend" label="按日期统计的访问次数折线图" />
+            <DashboardChart v-if="stats?.daily?.length" :option="trend" label="按日期统计的访问次数折线图"
+              @marker-click="peakDate = $event" />
             <p v-else class="empty">该时段暂无访问记录</p>
+            <div v-if="spikes.length" class="peak-days">
+              <span title="有短链的访问次数较前一天至少增加 10 次，且达到前一天的两倍">流量突增</span>
+              <el-button v-for="day in spikes" :key="day.date" link type="primary"
+                @click="peakDate = day.date">{{ day.date.slice(5) }} · {{ day.pv }} 次</el-button>
+            </div>
+            <div v-if="peakDate" class="contributors" aria-live="polite">
+              <strong>{{ peakDate }} 当日贡献</strong>
+              <el-button link @click="peakDate = ''">收起</el-button>
+              <p v-if="peakLoading">正在查询…</p>
+              <p v-else-if="peakError">{{ peakError }} <el-button link @click="peakRetry++">重试</el-button></p>
+              <ol v-else-if="contributors.length"><li v-for="item in contributors" :key="item.fullShortUrl">
+                {{ item.title || item.fullShortUrl }} · {{ format(item.pv) }} 次
+              </li></ol>
+              <p v-else>当天暂无访问记录</p>
+            </div>
           </section>
           <section class="panel"><h2>设备分布</h2>
             <DashboardChart v-if="devices.length" :option="deviceChart" label="各类设备访问占比" />
@@ -79,11 +96,17 @@ import dayjs from 'dayjs'
 import groupApi from '@/api/modules/group'
 import { getUsername } from '@/core/auth'
 import DashboardChart from './DashboardChart.vue'
+import { reportCsv } from './report'
 
 const RankedLinkDetail = defineAsyncComponent(() => import('./RankedLinkDetail.vue'))
 const detail = ref(null)
 const ranking = ref([])
 const rankError = ref('')
+const peakDate = ref('')
+const peakRetry = ref(0)
+const peakLoading = ref(false)
+const peakError = ref('')
+const contributors = ref([])
 
 const gid = inject('activeLinkGroup')
 const username = getUsername()
@@ -111,6 +134,32 @@ async function loadRanking(group, dates) {
   })
   if (!data.success) throw Error(data.message || '无法加载短链排行')
   return data.data || []
+}
+
+watch([peakDate, peakRetry], async ([date], _, onCleanup) => {
+  if (!date) return
+  let active = true
+  onCleanup(() => { active = false })
+  peakLoading.value = true
+  peakError.value = ''
+  try {
+    const rows = await loadRanking(gid.value, [date, date])
+    if (active) contributors.value = rows
+  } catch (e) {
+    if (active) peakError.value = e.message || '无法加载当日贡献'
+  } finally {
+    if (active) peakLoading.value = false
+  }
+})
+function exportReport() {
+  const group = groups.value.find(item => item.gid === gid.value).name
+  const csv = reportCsv(group, range.value, stats.value?.daily || [], ranking.value)
+  const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }))
+  const link = document.createElement('a')
+  link.href = url
+  link.download = [group, ...range.value, '访问统计.csv'].join('_')
+  link.click()
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
 async function loadGroups() {
@@ -142,6 +191,7 @@ watch([gid, range, groupLoading, refresh], async ([group, dates, waiting], _, on
   ranking.value = []
   rankError.value = ''
   detail.value = null
+  peakDate.value = ''
   const rankRequest = loadRanking(group, dates).then(rows => {
     if (active) ranking.value = rows
   }).catch(e => {
@@ -172,9 +222,19 @@ function timeChart(labels, values, type) {
       areaStyle: type === 'line' ? { opacity: 0.08 } : undefined }]
   }
 }
+const spikes = computed(() => {
+  const dates = new Set(stats.value?.spikeDates || [])
+  return (stats.value?.daily || []).filter(day => dates.has(day.date))
+})
 const trend = computed(() => {
   const daily = stats.value?.daily || []
-  return timeChart(daily.map(day => day.date.slice(5)), daily.map(day => day.pv), 'line')
+  const option = timeChart(daily.map(day => day.date), daily.map(day => day.pv), 'line')
+  option.xAxis.axisLabel.formatter = date => date.slice(5)
+  option.series[0].markPoint = {
+    symbol: 'circle', symbolSize: 13, label: { show: false }, itemStyle: { color: '#df891b' },
+    data: spikes.value.map(day => ({ name: day.date, coord: [day.date, day.pv], value: day.pv }))
+  }
+  return option
 })
 const hourChart = computed(() => {
   const hours = stats.value?.hourStats || []
@@ -212,7 +272,11 @@ h1 { font-size: 19px; } h2 { font-size: 15px; margin: 0 0 12px; }
 .charts { grid-template-columns: minmax(0, 2.3fr) minmax(220px, 1fr); }
 .empty, .pending { text-align: center; padding: 18px 0; }
 .empty { height: 216px; align-content: center; }
-h2 small { font-size: 12px; font-weight: 400; color: #606266; }
+h2 small, .peak-days { font-size: 12px; font-weight: 400; color: #606266; }
+.peak-days { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.contributors { margin-top: 8px; padding: 8px 12px; background: #f7f8fa; font-size: 13px; }
+.contributors ol { padding-left: 18px; }
+.contributors li { list-style: decimal; }
 .details { padding-block: 0; }
 @media (max-width: 760px) {
   aside { display: none; }

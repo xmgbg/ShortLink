@@ -7,6 +7,7 @@ import { onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import * as echarts from 'echarts'
 
 const props = defineProps({ option: Object, label: String })
+const emit = defineEmits(['marker-click'])
 const container = ref(null)
 let chart
 let observer
@@ -16,6 +17,9 @@ onMounted(() => {
     if (chart) chart.resize()
     else {
       chart = echarts.init(container.value)
+      chart.on('click', event => {
+        if (event.componentType === 'markPoint') emit('marker-click', event.data.name)
+      })
       chart.setOption(props.option)
     }
   })

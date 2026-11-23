@@ -54,6 +54,11 @@ public class ShortLinkStatsRespDTO {
     private List<ShortLinkStatsAccessDailyRespDTO> daily;
 
     /**
+     * 出现单条短链访问突增的日期
+     */
+    private List<String> spikeDates;
+
+    /**
      * 地区访问详情（仅国内）
      */
     private List<ShortLinkStatsLocaleCNRespDTO> localeCnStats;

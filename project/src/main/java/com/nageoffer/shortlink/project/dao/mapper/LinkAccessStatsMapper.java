@@ -26,6 +26,7 @@ import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -63,25 +64,14 @@ public interface LinkAccessStatsMapper extends BaseMapper<LinkAccessStatsDO> {
             "    tlas.full_short_url, tl.gid, tlas.date;")
     List<LinkAccessStatsDO> listStatsByShortLink(@Param("param") ShortLinkStatsReqDTO requestParam);
 
-    /**
-     * 根据分组获取指定日期内基础监控数据
-     */
-    @Select("SELECT " +
-            "    tlas.date, " +
-            "    SUM(tlas.pv) AS pv, " +
-            "    SUM(tlas.uv) AS uv, " +
-            "    SUM(tlas.uip) AS uip " +
-            "FROM " +
-            "    t_link tl INNER JOIN " +
-            "    t_link_access_stats tlas ON tl.full_short_url = tlas.full_short_url " +
-            "WHERE " +
-            "    tl.gid = #{param.gid} " +
-            "    AND tl.del_flag = '0' " +
-            "    AND tl.enable_status = '0' " +
-            "    AND tlas.date BETWEEN #{param.startDate} and #{param.endDate} " +
-            "GROUP BY " +
-            "    tl.gid, tlas.date;")
-    List<LinkAccessStatsDO> listStatsByGroup(@Param("param") ShortLinkGroupStatsReqDTO requestParam);
+    @Select("""
+            SELECT t.full_short_url AS fullShortUrl, s.date, SUM(s.pv) AS pv
+            FROM t_link t JOIN t_link_access_stats s ON t.full_short_url = s.full_short_url
+            WHERE t.gid = #{gid} AND t.del_flag = 0 AND t.enable_status = 0
+              AND s.date BETWEEN #{from} AND #{to}
+            GROUP BY t.full_short_url, s.date
+            """)
+    List<LinkAccessStatsDO> listDailyLinkPv(@Param("gid") String gid, @Param("from") LocalDate from, @Param("to") LocalDate to);
 
     /**
      * 根据短链接获取指定日期内小时基础监控数据
