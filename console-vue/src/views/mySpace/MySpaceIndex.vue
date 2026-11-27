@@ -103,6 +103,7 @@
                 isExpire: scope?.row?.validDateType === 1 && !isExpire(scope?.row?.validDate)
               }">
                 <img
+                  referrerpolicy="no-referrer"
                   :src="getImgUrl(scope.row.favicon)"
                   :key="scope?.row?.id"
                   width="20"

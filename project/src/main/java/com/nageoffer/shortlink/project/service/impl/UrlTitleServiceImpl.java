@@ -19,9 +19,10 @@ package com.nageoffer.shortlink.project.service.impl;
 
 import com.nageoffer.shortlink.project.service.UrlTitleService;
 import com.nageoffer.shortlink.project.toolkit.SafeUrlFetcher;
-import lombok.SneakyThrows;
 import org.jsoup.nodes.Document;
 import org.springframework.stereotype.Service;
+
+import java.io.IOException;
 
 /**
  * URL 标题接口实现层
@@ -29,10 +30,13 @@ import org.springframework.stereotype.Service;
 @Service
 public class UrlTitleServiceImpl implements UrlTitleService {
 
-    @SneakyThrows
     @Override
     public String getTitleByUrl(String url) {
-        Document document = SafeUrlFetcher.fetch(url);
-        return document.title();
+        try {
+            Document document = SafeUrlFetcher.fetch(url);
+            return document.title();
+        } catch (IOException ex) {
+            return "";
+        }
     }
 }

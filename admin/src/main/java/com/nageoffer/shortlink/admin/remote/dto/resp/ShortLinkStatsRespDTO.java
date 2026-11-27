@@ -55,6 +55,7 @@ public class ShortLinkStatsRespDTO {
 
     /**
      * 出现单条短链访问突增的日期
+     * 日期格式为 yyyy-MM-dd。单条短链接较前一自然日访问量至少增加 10 次且达到两倍时计入。
      */
     private List<String> spikeDates;
 

@@ -116,11 +116,16 @@ const fd = (fn, delay) => {
     }, delay)
   }
 }
-const queryTitle = (url) => {
-  if (reg.test(url)) {
-    API.smallLinkPage.queryTitle({ url: url }).then(res => {
-      formData.describe = res?.data?.data
-    })
+const queryTitle = async (url) => {
+  if (!reg.test(url) || formData.originUrl !== url || formData.describe) return
+  try {
+    const res = await API.smallLinkPage.queryTitle({ url })
+    const title = res?.data?.data
+    if (title && formData.originUrl === url && !formData.describe) {
+      formData.describe = title
+    }
+  } catch {
+    // 自动填充失败时，用户仍可手动输入描述。
   }
 }
 const getTitle = fd(queryTitle, 1000)

@@ -65,5 +65,11 @@ public interface ShortLinkStatsService {
      */
     IPage<ShortLinkStatsAccessRecordRespDTO> groupShortLinkStatsAccessRecord(ShortLinkGroupStatsAccessRecordReqDTO requestParam);
 
+    /**
+     * 校验分组归属并查询指定时段内访问次数最多的 5 条短链接。
+     *
+     * @param param 分组标识及起止时间
+     * @return 热门短链接排行，无访问记录时返回空列表
+     */
     List<ShortLinkRankRespDTO> rankByGroup(ShortLinkGroupStatsReqDTO param);
 }

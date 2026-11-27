@@ -17,5 +17,14 @@
 
 package com.nageoffer.shortlink.project.dto.resp;
 
+/**
+ * 分组热门短链接排行条目
+ *
+ * @param title        短链接描述
+ * @param fullShortUrl 完整短链接地址
+ * @param originUrl    原始链接地址
+ * @param favicon      原始网站图标地址
+ * @param pv           所选时段内的访问次数
+ */
 public record ShortLinkRankRespDTO(String title, String fullShortUrl, String originUrl, String favicon, long pv) {
 }

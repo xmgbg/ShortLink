@@ -72,6 +72,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -270,10 +271,12 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
                     .eq(ShortLinkDO::getDelFlag, 0)
                     .eq(ShortLinkDO::getEnableStatus, 0)
                     .set(Objects.equals(requestParam.getValidDateType(), VailDateTypeEnum.PERMANENT.getType()), ShortLinkDO::getValidDate, null);
+            if (!Objects.equals(requestParam.getOriginUrl(), hasShortLinkDO.getOriginUrl())) {
+                updateWrapper.set(ShortLinkDO::getFavicon, getFavicon(requestParam.getOriginUrl()));
+            }
             ShortLinkDO shortLinkDO = ShortLinkDO.builder()
                     .domain(hasShortLinkDO.getDomain())
                     .shortUri(hasShortLinkDO.getShortUri())
-                    .favicon(Objects.equals(requestParam.getOriginUrl(), hasShortLinkDO.getOriginUrl()) ? hasShortLinkDO.getFavicon() : getFavicon(requestParam.getOriginUrl()))
                     .createdType(hasShortLinkDO.getCreatedType())
                     .gid(requestParam.getGid())
                     .originUrl(requestParam.getOriginUrl())
@@ -538,14 +541,14 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
         return shorUri;
     }
 
-    @SneakyThrows
     private String getFavicon(String url) {
-        Document document = SafeUrlFetcher.fetch(url);
-        Element faviconLink = document.select("link[rel~=(?i)^(shortcut )?icon]").first();
-        if (faviconLink != null) {
-            return faviconLink.attr("abs:href");
+        try {
+            Document document = SafeUrlFetcher.fetch(url);
+            Element faviconLink = document.selectFirst("link[rel~=(?i)^(shortcut )?icon]");
+            return faviconLink == null ? null : StrUtil.emptyToNull(faviconLink.attr("abs:href"));
+        } catch (IOException ex) {
+            return null;
         }
-        return null;
     }
 
     private void verificationWhitelist(String originUrl) {

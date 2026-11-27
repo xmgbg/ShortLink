@@ -19,7 +19,6 @@
         <el-input
           maxlength="100"
           show-word-limit
-          v-loading="isLoading"
           :rows="4"
           v-model="formData.describe"
           type="textarea"
@@ -158,14 +157,16 @@ const fd = (fn, delay) => {
     }, delay)
   }
 }
-const isLoading = ref(false)
-const queryTitle = (url) => {
-  if (reg.test(url)) {
-    isLoading.value = true
-    API.smallLinkPage.queryTitle({ url: url }).then((res) => {
-      formData.describe = res?.data?.data
-      isLoading.value = false
-    })
+const queryTitle = async (url) => {
+  if (!reg.test(url) || formData.originUrl !== url || formData.describe) return
+  try {
+    const res = await API.smallLinkPage.queryTitle({ url })
+    const title = res?.data?.data
+    if (title && formData.originUrl === url && !formData.describe) {
+      formData.describe = title
+    }
+  } catch {
+    // 自动填充失败时，用户仍可手动输入描述。
   }
 }
 const getTitle = fd(queryTitle, 1000)

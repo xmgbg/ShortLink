@@ -214,6 +214,14 @@ public interface ShortLinkActualRemoteService {
                                                                                     @RequestParam("current") Long current,
                                                                                     @RequestParam("size") Long size);
 
+    /**
+     * 查询分组在所选时段内访问次数最多的 5 条短链接。
+     *
+     * @param gid       分组标识
+     * @param startDate 开始时间，格式为 yyyy-MM-dd HH:mm:ss
+     * @param endDate   结束时间，格式为 yyyy-MM-dd HH:mm:ss
+     * @return 分组热门短链接排行的统一响应
+     */
     @GetMapping("/api/short-link/v1/stats/group/ranking")
     Result<List<ShortLinkRankRespDTO>> rankByGroup(@RequestParam("gid") String gid,
                                                   @RequestParam("startDate") String startDate,

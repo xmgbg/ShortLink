@@ -58,6 +58,7 @@ public class ShortLinkStatsController {
 
     /**
      * 访问分组短链接指定时间内监控数据
+     * 分组每日独立访客和独立 IP 按当天访问日志去重，响应包含出现单条短链接访问突增的日期。
      */
     @GetMapping("/api/short-link/admin/v1/stats/group")
     public Result<ShortLinkStatsRespDTO> groupShortLinkStats(ShortLinkGroupStatsReqDTO requestParam) {
@@ -98,6 +99,14 @@ public class ShortLinkStatsController {
         );
     }
 
+    /**
+     * 查询指定分组在所选时段内访问次数最多的 5 条短链接。
+     * 访问次数相同的短链接按完整短链地址升序排列。
+     *
+     * @param param 分组标识及起止时间，时间格式为 yyyy-MM-dd HH:mm:ss
+     * @return 项目统一响应。业务码 {@code 0} 表示查询成功，无符合条件的访问数据时返回空列表。
+     *         分组归属校验失败沿用监控接口的业务码 {@code B000001}。
+     */
     @GetMapping("/api/short-link/admin/v1/stats/group/ranking")
     public Result<List<ShortLinkRankRespDTO>> rankByGroup(ShortLinkGroupStatsReqDTO param) {
         return shortLinkActualRemoteService.rankByGroup(param.getGid(), param.getStartDate(), param.getEndDate());
