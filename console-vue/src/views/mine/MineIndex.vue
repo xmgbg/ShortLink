@@ -5,7 +5,18 @@
       <h1>个人信息</h1>
       <article v-loading="loading" class="profile-card">
         <header class="profile-header">
-          <span class="profile-avatar" aria-hidden="true">{{ initials }}</span>
+          <div class="avatar-settings">
+            <AccountAvatar :username="username" :src="avatar" :size="52" />
+            <label class="avatar-picker">
+              <span>更换头像</span>
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                :disabled="savingAvatar"
+                @change="changeAvatar"
+              />
+            </label>
+          </div>
           <div class="identity">
             <h2>{{ profile?.realName || username }}</h2>
             <span>{{ username }}</span>
@@ -41,20 +52,22 @@
 </template>
 
 <script setup>
-import { computed, getCurrentInstance, ref } from 'vue'
+import { computed, getCurrentInstance, inject, ref } from 'vue'
 import { Edit, Iphone, Message } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
+import AccountAvatar from '@/components/AccountAvatar.vue'
 import { getUsername } from '@/core/auth'
 
 const { proxy } = getCurrentInstance()
+const { avatar, saveAvatar } = inject('accountAvatar')
 const profile = ref(null)
 const draft = ref({})
 const editor = ref()
 const dialogVisible = ref(false)
 const loading = ref(false)
 const saving = ref(false)
+const savingAvatar = ref(false)
 const username = computed(() => profile.value?.username || getUsername() || '')
-const initials = computed(() => Array.from(username.value).slice(0, 2).join('').toUpperCase())
 const maskedPhone = computed(() => {
   const phone = profile.value?.phone
   if (!phone) return '—'
@@ -98,6 +111,36 @@ function openEditor() {
   dialogVisible.value = true
 }
 
+async function changeAvatar(event) {
+  const input = event.currentTarget
+  const file = input.files[0]
+  input.value = ''
+  if (!file) return
+  if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 4 * 1024 * 1024) {
+    ElMessage.warning('请选择 4 MB 以内的 JPG、PNG 或 WebP 图片')
+    return
+  }
+
+  savingAvatar.value = true
+  try {
+    const image = await createImageBitmap(file)
+    const side = Math.min(image.width, image.height)
+    const canvas = document.createElement('canvas')
+    canvas.width = canvas.height = 192
+    const context = canvas.getContext('2d')
+    context.fillStyle = '#ffffff'
+    context.fillRect(0, 0, canvas.width, canvas.height)
+    context.drawImage(image, (image.width - side) / 2, (image.height - side) / 2, side, side, 0, 0, canvas.width, canvas.height)
+    image.close()
+    await saveAvatar(canvas.toDataURL('image/jpeg', 0.85))
+    ElMessage.success('头像已更新')
+  } catch {
+    ElMessage.error('头像更新失败，请换一张图片后重试')
+  } finally {
+    savingAvatar.value = false
+  }
+}
+
 async function saveProfile() {
   if (saving.value || !await editor.value?.validate().catch(() => false)) return
   saving.value = true
@@ -131,16 +174,11 @@ loadProfile()
 .account-content h1 { margin: 0 0 20px; font-size: 20px; font-weight: 600; }
 .profile-card { background: white; border: 1px solid #dce2eb; border-radius: 8px; }
 .profile-header { display: flex; align-items: center; gap: 14px; padding: 24px; }
-.profile-avatar {
-  display: grid;
-  place-items: center;
-  flex: 0 0 52px;
-  height: 52px;
-  border-radius: 50%;
-  background: linear-gradient(140deg, #203657 80%, #4e9ceb 80%);
-  color: white;
-  font: 600 18px/1 Arial, sans-serif;
-}
+.avatar-settings { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.avatar-picker { position: relative; font-size: 12px; color: #2465ad; cursor: pointer; }
+.avatar-picker:focus-within { outline: 2px solid #2465ad; outline-offset: 2px; }
+.avatar-picker input { position: absolute; inset: 0; width: 100%; opacity: 0; cursor: inherit; }
+.avatar-picker:has(input:disabled) { opacity: 0.6; cursor: wait; }
 .identity { min-width: 0; flex: 1; overflow-wrap: anywhere; }
 .identity h2 { margin: 0 0 4px; font-size: 17px; font-weight: 600; }
 .identity span { font-size: 14px; color: #626f80; }

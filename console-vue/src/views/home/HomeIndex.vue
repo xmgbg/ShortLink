@@ -10,6 +10,7 @@
           </nav>
           <el-dropdown>
               <div class="block">
+                <AccountAvatar :username="accountUsername" :src="avatar" />
                 <span
                     class="name-span"
                     style="text-decoration: none"
@@ -55,10 +56,11 @@
 </template>
 
 <script setup>
-import { ref, getCurrentInstance, onMounted, provide } from 'vue'
+import { ref, getCurrentInstance, provide } from 'vue'
 import { useRouter } from 'vue-router'
 import { removeKey, removeUsername, getToken, getUsername } from '@/core/auth.js'
 import { ElMessage } from 'element-plus'
+import AccountAvatar from '@/components/AccountAvatar.vue'
 const { proxy } = getCurrentInstance()
 const API = proxy.$API
 // 当当前路径和菜单不匹配时，菜单不会被选中
@@ -84,12 +86,21 @@ const logout = async () => {
 const toMySpace = () => {
   router.push('/home' + '/space')
 }
-const username = ref('')
-onMounted(async () => {
-  const actualUsername = getUsername()
-  const res = await API.user.queryUserInfo(actualUsername)
-  // firstName.value = res?.data?.data?.realName?.split('')[0]
-  username.value = truncateText(actualUsername, 8)
+const accountUsername = getUsername() || ''
+const username = truncateText(accountUsername, 8)
+const avatarKey = 'linkflow:avatar:' + accountUsername
+const avatar = ref('')
+try {
+  avatar.value = localStorage.getItem(avatarKey) || ''
+} catch {
+  // 浏览器禁用本地存储时，仍可显示用户名缩写。
+}
+provide('accountAvatar', {
+  avatar,
+  saveAvatar(src) {
+    localStorage.setItem(avatarKey, src)
+    avatar.value = src
+  }
 })
 const extractColorByName = (name) => {
   var temp = []
@@ -101,7 +112,7 @@ const extractColorByName = (name) => {
 }
 
 // 辅助函数，用于截断文本
-const truncateText = (text, maxLength) => {
+function truncateText(text, maxLength) {
   return text.length > maxLength ? text.slice(0, maxLength) + '...' : text
 }
 </script>
@@ -137,6 +148,7 @@ const truncateText = (text, maxLength) => {
     cursor: pointer;
     display: flex;
     align-items: center;
+    gap: 8px;
     border: 0px;
   }
 }
@@ -191,7 +203,7 @@ const truncateText = (text, maxLength) => {
 
 .name-span {
   color: #fff;
-  opacity: .6;
+  opacity: .92;
   margin-right: 30px;
   font-size: 12px;
   font-family: 'Helvetica Neue', Helvetica, STHeiTi, Arial, sans-serif;
