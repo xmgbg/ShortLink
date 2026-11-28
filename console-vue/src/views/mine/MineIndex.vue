@@ -1,251 +1,159 @@
 <template>
-  <div style="display: flex; height: 100%; width: 100%">
-    <div class="options-box">
-      <div>
-        <span>账号设置</span>
-      </div>
-    </div>
-    <div class="main-box">
-      <el-descriptions
-        class="margin-top content-box"
-        title="个人信息"
-        :column="1"
-        :size="size"
-        border
-      >
-        <el-descriptions-item>
-          <template #label>
-            <div class="cell-item">
-              <el-icon :style="iconStyle">
-                <user />
-              </el-icon>
-              用户名
-            </div>
-          </template>
-          <span v-if="!dialogVisible">{{ userInfo?.data?.data?.username }}</span>
-        </el-descriptions-item>
-        <el-descriptions-item>
-          <template #label>
-            <div class="cell-item">
-              <el-icon :style="iconStyle">
-                <iphone />
-              </el-icon>
-              手机号
-            </div>
-          </template>
-          <span>{{ userInfo?.data?.data?.phone }}</span>
-        </el-descriptions-item>
-        <el-descriptions-item>
-          <template #label>
-            <div class="cell-item">
-              <el-icon :style="iconStyle">
-                <tickets />
-              </el-icon>
-              姓名
-            </div>
-          </template>
-          <span>{{ userInfo?.data?.data?.realName }}</span>
-        </el-descriptions-item>
-        <el-descriptions-item>
-          <template #label>
-            <div class="cell-item">
-              <el-icon :style="iconStyle">
-                <Message />
-              </el-icon>
-              邮箱
-            </div>
-          </template>
-          <span>{{ userInfo?.data?.data?.mail }}</span>
-        </el-descriptions-item>
-      </el-descriptions>
-      <el-button style="position: absolute;left: 35px; top: 250px; " type="primary" @click="dialogVisible = !dialogVisible">修改个人信息</el-button>
-    </div>
-  </div>
-  <!-- 修改信息 -->
-  <el-dialog v-model="dialogVisible" title="修改个人信息" width="60%" :before-close="handleClose">
-    <div class="register" :class="{ hidden: isLogin }">
-      <el-form
-        ref="loginFormRef"
-        :model="userInfoForm"
-        label-width="50px"
-        class="form-container"
-        width="width"
-        :rules="formRule"
-      >
-        <el-form-item prop="username">
-          <el-input
-            v-model="userInfoForm.username"
-            placeholder="请输入用户名"
-            maxlength="11"
-            show-word-limit
-            disabled
-          >
-            <template v-slot:prepend> 用户名 </template>
-          </el-input>
-        </el-form-item>
-        <el-form-item prop="mail">
-          <el-input v-model="userInfoForm.mail" placeholder="请输入邮箱" show-word-limit clearable>
-            <template v-slot:prepend> 邮<span class="second-font">箱</span> </template>
-          </el-input>
-        </el-form-item>
-        <el-form-item prop="phone">
-          <el-input
-            v-model="userInfoForm.phone"
-            placeholder="请输入手机号"
-            show-word-limit
-            clearable
-          >
-            <template v-slot:prepend> 手机号 </template>
-          </el-input>
-        </el-form-item>
-        <el-form-item prop="realName">
-          <el-input
-            v-model="userInfoForm.realName"
-            placeholder="请输入姓名"
-            show-word-limit
-            clearable
-          >
-            <template v-slot:prepend> 姓<span class="second-font">名</span> </template>
-          </el-input>
-        </el-form-item>
-        <el-form-item prop="password">
-          <el-input
-            v-model="userInfoForm.password"
-            placeholder="默认密码，如需修改可输入新密码"
-            show-word-limit
-            clearable
-          >
-            <template v-slot:prepend> 密<span class="second-font">码</span> </template>
-          </el-input>
-        </el-form-item>
-        <el-form-item>
-          <div style="width: 100%; display: flex; justify-content: flex-end">
-            <el-button @click="dialogVisible = false">取消</el-button>
-            <el-button type="primary" @click="changeUserInfo(loginFormRef)"> 提交 </el-button>
+  <section class="account-page">
+    <div class="account-content">
+      <p class="section-label">账号设置</p>
+      <h1>个人信息</h1>
+      <article v-loading="loading" class="profile-card">
+        <header class="profile-header">
+          <span class="profile-avatar" aria-hidden="true">{{ initials }}</span>
+          <div class="identity">
+            <h2>{{ profile?.realName || username }}</h2>
+            <span>{{ username }}</span>
           </div>
+          <el-button :icon="Edit" plain type="primary" :disabled="!profile" @click="openEditor">编辑资料</el-button>
+        </header>
+        <section class="contact-info">
+          <h3>联系方式</h3>
+          <dl>
+            <div><dt><el-icon><Iphone /></el-icon>手机号</dt><dd>{{ maskedPhone }}</dd></div>
+            <div><dt><el-icon><Message /></el-icon>邮箱</dt><dd>{{ maskedMail }}</dd></div>
+          </dl>
+        </section>
+      </article>
+    </div>
+
+    <el-dialog v-model="dialogVisible" title="编辑资料" width="min(440px, 92vw)" destroy-on-close>
+      <el-form ref="editor" :model="draft" :rules="formRule" label-width="72px" @submit.prevent="saveProfile">
+        <el-form-item label="用户名"><el-input :model-value="username" disabled /></el-form-item>
+        <el-form-item label="姓名" prop="realName"><el-input v-model="draft.realName" clearable /></el-form-item>
+        <el-form-item label="手机号" prop="phone"><el-input v-model="draft.phone" type="tel" clearable /></el-form-item>
+        <el-form-item label="邮箱" prop="mail"><el-input v-model="draft.mail" clearable /></el-form-item>
+        <el-form-item label="新密码" prop="password">
+          <el-input v-model="draft.password" type="password" show-password autocomplete="new-password" placeholder="留空保留当前密码" />
         </el-form-item>
       </el-form>
-    </div>
-  </el-dialog>
+      <template #footer>
+        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="saving" @click="saveProfile">保存</el-button>
+      </template>
+    </el-dialog>
+  </section>
 </template>
 
 <script setup>
-import { getCurrentInstance, ref, reactive } from 'vue'
-import { getUsername } from '@/core/auth'
-import { cloneDeep } from 'lodash'
+import { computed, getCurrentInstance, ref } from 'vue'
+import { Edit, Iphone, Message } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-const loginFormRef = ref()
+import { getUsername } from '@/core/auth'
+
 const { proxy } = getCurrentInstance()
-// eslint-disable-next-line no-unused-vars
-const API = proxy.$API
-const userInfo = ref()
-const userInfoForm = ref() // 修改信息
-const getUserInfo = async () => {
-  const username = getUsername()
-  userInfo.value = await API.user.queryUserInfo(username)
-  userInfoForm.value = cloneDeep(userInfo.value.data?.data)
-  // console.log(userInfoForm.value)
-}
-getUserInfo()
-// 修改信息
+const profile = ref(null)
+const draft = ref({})
+const editor = ref()
 const dialogVisible = ref(false)
-const formRule = reactive({
+const loading = ref(false)
+const saving = ref(false)
+const username = computed(() => profile.value?.username || getUsername() || '')
+const initials = computed(() => Array.from(username.value).slice(0, 2).join('').toUpperCase())
+const maskedPhone = computed(() => {
+  const phone = profile.value?.phone
+  if (!phone) return '—'
+  return /^\d{11}$/.test(phone) ? phone.slice(0, 3) + ' **** ' + phone.slice(-4) : '****'
+})
+const maskedMail = computed(() => {
+  const mail = profile.value?.mail
+  if (!mail) return '—'
+  const at = mail.lastIndexOf('@')
+  if (at < 1) return '****'
+  return mail.slice(0, Math.min(3, at - 1)) + '****' + mail.slice(at)
+})
+
+const formRule = {
   phone: [
     { required: true, message: '请输入手机号', trigger: 'blur' },
-    {
-      pattern: /^1[3|5|7|8|9]\d{9}$/,
-      message: '请输入正确的手机号',
-      trigger: 'blur'
-    },
-    { min: 11, max: 11, message: '手机号必须是11位', trigger: 'blur' }
+    { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号', trigger: 'blur' }
   ],
-  username: [{ required: true, message: '请输入您的用户名', trigger: 'blur' }],
   mail: [
     { required: true, message: '请输入邮箱', trigger: 'blur' },
-    {
-      pattern: /^([a-zA-Z]|[0-9])(\w|\-)+@[a-zA-Z0-9]+\.([a-zA-Z]{2,4})$/,
-      message: '请输入正确的邮箱号',
-      trigger: 'blur'
-    }
+    { type: 'email', message: '请输入正确的邮箱', trigger: 'blur' }
   ],
-  password: [
-    { required: false, message: '请输入密码', trigger: 'blur' },
-    { min: 8, max: 15, message: '密码长度请在八位以上', trigger: 'blur' }
-  ],
-  realNamee: [{ required: true, message: '请输姓名', trigger: 'blur' }]
-})
-const changeUserInfo = (formEl) => {
-  if (!formEl) return
-  formEl.validate(async (valid) => {
-    if (valid) {
-      await API.user.editUser(userInfoForm.value).then((res) => {
-        if (res?.data?.code !== '0') {
-          ElMessage.error(res.data.message)
-        } else {
-          getUserInfo()
-          dialogVisible.value = false
-          ElMessage.success('修改成功!')
-        }
-      })
-    } else {
-      return false
-    }
-  })
-}
-</script>
-
-<style lang="scss" scoped>
-.main-box {
-  position: relative;
-  flex: 1;
-  padding: 15px;
-  background-color: rgb(238, 240, 245);
-  height: calc(100vh - 50px);
-  display: flex;
-  flex-direction: column;
+  password: [{ min: 8, max: 15, message: '密码长度为 8 至 15 位', trigger: 'blur' }]
 }
 
-.content-box {
-  flex: 1;
-  background-color: #ffffff;
-  padding: 20px;
-}
-
-.register {
-  padding-right: 30px;
-}
-
-:deep(.el-descriptions__label) {
-  width: 200px !important;
-}
-
-.second-font {
-  margin-left: 13px;
-}
-
-.options-box {
-  position: relative;
-  height: 100%;
-  width: 190px;
-  border-right: 1px solid rgba(0, 0, 0, 0.1);
-  display: flex;
-  padding-top: 15px;
-  div {
-    flex: 1;
-    display: flex;
-    height: 50px;
-    align-items: center;
-    // justify-content: center;
-    padding-left: 15px;
-    background-color: rgb(235, 239, 250);
-    font-family:
-      PingFangSC-Semibold,
-      PingFang SC;
-    color: #3464e0;
-    font-weight: 600;
+async function loadProfile() {
+  loading.value = true
+  try {
+    const { data } = await proxy.$API.user.queryUserInfo(getUsername())
+    if (!data?.data) throw new Error(data?.message || '个人信息读取失败')
+    profile.value = data.data
+  } catch (error) {
+    ElMessage.error(error.message)
+  } finally {
+    loading.value = false
   }
 }
-:deep(.el-descriptions__body) {
-  width: 500px;
+
+function openEditor() {
+  draft.value = { ...profile.value, password: '' }
+  dialogVisible.value = true
+}
+
+async function saveProfile() {
+  if (saving.value || !await editor.value?.validate().catch(() => false)) return
+  saving.value = true
+  try {
+    const { data } = await proxy.$API.user.editUser(draft.value)
+    if (data?.code !== '0') throw new Error(data?.message || '保存失败')
+    dialogVisible.value = false
+    ElMessage.success('修改成功')
+    await loadProfile()
+  } catch (error) {
+    ElMessage.error(error.message)
+  } finally {
+    saving.value = false
+  }
+}
+
+loadProfile()
+</script>
+
+<style scoped>
+.account-page {
+  box-sizing: border-box;
+  min-height: calc(100vh - 54px);
+  height: auto;
+  padding: 32px 24px;
+  background: #eef1f6;
+  color: #202b3c;
+}
+.account-content { max-width: 880px; margin: 0 auto; }
+.section-label { margin: 0 0 6px; font-size: 13px; color: #586679; }
+.account-content h1 { margin: 0 0 20px; font-size: 20px; font-weight: 600; }
+.profile-card { background: white; border: 1px solid #dce2eb; border-radius: 8px; }
+.profile-header { display: flex; align-items: center; gap: 14px; padding: 24px; }
+.profile-avatar {
+  display: grid;
+  place-items: center;
+  flex: 0 0 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: linear-gradient(140deg, #203657 80%, #4e9ceb 80%);
+  color: white;
+  font: 600 18px/1 Arial, sans-serif;
+}
+.identity { min-width: 0; flex: 1; overflow-wrap: anywhere; }
+.identity h2 { margin: 0 0 4px; font-size: 17px; font-weight: 600; }
+.identity span { font-size: 14px; color: #626f80; }
+.contact-info { margin: 0 24px; padding: 20px 0 8px; border-top: 1px solid #e3e8ef; }
+.contact-info h3 { margin: 0 0 8px; font-size: 15px; font-weight: 600; }
+.contact-info dl { margin: 0; font-size: 14px; }
+.contact-info dl > div { display: grid; grid-template-columns: minmax(92px, 20%) 1fr; gap: 16px; padding: 15px 0; }
+.contact-info dl > div + div { border-top: 1px solid #edf0f4; }
+.contact-info dt { display: flex; align-items: center; gap: 10px; color: #586679; }
+.contact-info dd { min-width: 0; margin: 0; overflow-wrap: anywhere; }
+@media (max-width: 600px) {
+  .account-page { padding: 20px 12px; }
+  .profile-header { padding: 16px; gap: 10px; }
+  .contact-info { margin: 0 16px; }
 }
 </style>
